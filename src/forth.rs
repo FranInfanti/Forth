@@ -215,3 +215,285 @@ impl Forth {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    pub fn push_test() {
+        let mut forth = Forth::new(128);
+        let value = 10;
+
+        match forth.push(value) {
+            Ok(result) => assert_eq!(result, value),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn pop_test() {
+        let mut forth = Forth::new(128);
+        let value = 10;
+
+        let _ = forth.push(value);
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, value),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn suma_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+        let b = 5;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        let _ = forth.suma();
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, a + b),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn resta_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+        let b = 5;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        let _ = forth.resta();
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, b - a),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn producto_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+        let b = 5;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        let _ = forth.producto();
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, a * b),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn division_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+        let b = 5;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        let _ = forth.division();
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, b / a),
+            Err(_error) => {}
+        }
+    }
+
+    #[test]
+    pub fn igual_test() {
+        let mut forth = Forth::new(128);
+        let a = 1;
+        let b = 1;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        // a == b ?
+        match forth.igual() {
+            Ok(result) => assert_eq!(result, -1),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn mayor_test() {
+        let mut forth = Forth::new(128);
+        let a = 4;
+        let b = 2;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        // b > a ?
+        match forth.mayor() {
+            Ok(result) => assert_eq!(result, 0),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn menor_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+        let b = 1;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        // b < a ?
+        match forth.menor() {
+            Ok(result) => assert_eq!(result, -1),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn and_test() {
+        let mut forth = Forth::new(128);
+        let a = 2;
+        let b = 3;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        // 0010 && 0011 = 0010  
+        match forth.and() {
+            Ok(result) => assert_eq!(result, 2),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn or_test() {
+        let mut forth = Forth::new(128);
+        let a = 5;
+        let b = 1;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+
+        // 0101 || 0001 = 0101
+        match forth.or() {
+            Ok(result) => assert_eq!(result, 5),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn not_test() {
+        let mut forth = Forth::new(128);
+        let a = 5;
+
+        let _ = forth.push(a);
+
+        // not 0101 = 1010
+        match forth.menor() {
+            Ok(result) => assert_eq!(result, 10),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn dup_test() {
+        let mut forth = Forth::new(128);
+        let a = 10;
+
+        let _ = forth.push(a);
+        let _ = forth.dup();
+
+        match forth.pop() {
+            Ok(result) => assert_eq!(result, a),
+            Err(_) => (),
+        }
+    }
+
+    #[test]
+    pub fn swap_test() {
+        let mut forth = Forth::new(128);
+        let a = 5;
+        let b = 1;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+        let _ = forth.rot();
+
+        match forth.pop() {
+            Ok(first) => assert_eq!(first, b),
+            Err(_) => {},
+        };
+
+        match forth.pop() {
+            Ok(second) => assert_eq!(second, a),
+            Err(_) => {},
+        }
+    }
+
+    #[test]
+    pub fn over_test() {
+        let mut forth = Forth::new(128);
+        let a = 5;
+        let b = 2;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+        let _ = forth.over();
+
+        match forth.pop() {
+            Ok(expected) => assert_eq!(expected, a),
+            Err(_) => {},
+        };
+    }
+
+    #[test]
+    pub fn rot_test() {
+        let mut forth = Forth::new(128);
+        let a = 5;
+        let b = 2;
+        let c = 3;
+
+        let _ = forth.push(a);
+        let _ = forth.push(b);
+        let _ = forth.push(c);
+        let _ = forth.rot();
+
+        match forth.pop() {
+            Ok(expected) => assert_eq!(expected, a),
+            Err(_) => {},
+        };
+
+        match forth.pop() {
+            Ok(expected) => assert_eq!(expected, c),
+            Err(_) => {},            
+        }
+
+        match forth.pop() {
+            Ok(expected) => assert_eq!(expected, b),
+            Err(_) => {},            
+        }
+    }
+
+    #[test]
+    pub fn define_word_test() {
+        let mut forth = Forth::new(128);
+        let word_name = String::from("MAX");
+        let word_body = String::from("OVER OVER < IF SWAP THEN DROP");
+
+        match forth.define_word(word_name, word_body) {
+            Ok(result) => assert_eq!(result, 1),
+            Err(_error) => assert_eq!(true, false),
+        }
+    }
+}
