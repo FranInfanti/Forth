@@ -1,14 +1,11 @@
+use crate::error;
+
 use std::{
     collections::HashMap,
     ops::{BitAnd, BitOr},
 };
 
-pub enum Error {
-    StackUnderflow,
-    StackOverflow,
-    InvalidWord,
-    DivisionByZero,
-}
+use error::Error;
 
 pub struct Forth {
     stack: Vec<i16>,
@@ -71,12 +68,12 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        if b == 0 {
+        if a == 0 {
             return Err(Error::DivisionByZero);
         }
 
-        self.push(a / b)?;
-        Ok(a / b)
+        self.push(b / a)?;
+        Ok(b / a)
     }
 
     pub fn igual(&mut self) -> Result<i16, Error> {
@@ -195,23 +192,39 @@ impl Forth {
         self.push(c)
     }
 
-    pub fn print(&mut self) -> Result<i16, Error> {
+    pub fn print_stack(&mut self) -> Result<i16, Error> {
         let top = self.pop()?;
         print!("{}", top);
         Ok(top)
     }
 
-    pub fn cr(&mut self) {
+    pub fn cr(&mut self) -> Result<i16, Error> {
         println!();
+        Ok(0)
     }
 
-    pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
+    pub fn print_string(&mut self, string: String) {
+        println!("{}", string);
+    }
+
+    pub fn define_word(
+        &mut self,
+        word_name: String,
+        word_body: String,
+    ) -> Result<i16, Error> {
         match word_name.parse::<i16>() {
             Ok(_number) => Err(Error::InvalidWord),
             Err(_error) => {
                 self.words.insert(word_name, word_body);
                 Ok(1)
             }
+        }
+    }
+
+    pub fn get_word_body(&mut self, word_name: String) -> Result<&String, Error> {
+        match self.words.get(&word_name) {
+            Some(word_body) => Ok(word_body),
+            None => Err(Error::MissingWord),
         }
     }
 }
@@ -307,7 +320,7 @@ mod test {
         let _ = forth.division();
 
         match forth.pop() {
-            Ok(result) => assert_eq!(result, b / a),
+            Ok(result) => assert_eq!(result, a / b),
             Err(_error) => {}
         }
     }
@@ -369,7 +382,7 @@ mod test {
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        // 0010 && 0011 = 0010  
+        // 0010 && 0011 = 0010
         match forth.and() {
             Ok(result) => assert_eq!(result, 2),
             Err(_) => (),
@@ -432,12 +445,12 @@ mod test {
 
         match forth.pop() {
             Ok(first) => assert_eq!(first, b),
-            Err(_) => {},
+            Err(_) => {}
         };
 
         match forth.pop() {
             Ok(second) => assert_eq!(second, a),
-            Err(_) => {},
+            Err(_) => {}
         }
     }
 
@@ -453,7 +466,7 @@ mod test {
 
         match forth.pop() {
             Ok(expected) => assert_eq!(expected, a),
-            Err(_) => {},
+            Err(_) => {}
         };
     }
 
@@ -471,17 +484,17 @@ mod test {
 
         match forth.pop() {
             Ok(expected) => assert_eq!(expected, a),
-            Err(_) => {},
+            Err(_) => {}
         };
 
         match forth.pop() {
             Ok(expected) => assert_eq!(expected, c),
-            Err(_) => {},            
+            Err(_) => {}
         }
 
         match forth.pop() {
             Ok(expected) => assert_eq!(expected, b),
-            Err(_) => {},            
+            Err(_) => {}
         }
     }
 
@@ -491,9 +504,11 @@ mod test {
         let word_name = String::from("MAX");
         let word_body = String::from("OVER OVER < IF SWAP THEN DROP");
 
-        match forth.define_word(word_name, word_body) {
-            Ok(result) => assert_eq!(result, 1),
-            Err(_error) => assert_eq!(true, false),
+        let _ = forth.define_word(word_name, word_body);
+
+        match forth.get_word_body(String::from("MAX")) {
+            Ok(result) => assert_eq!("OVER OVER < IF SWAP THEN DROP", *result),
+            Err(_) => {}
         }
     }
 }
