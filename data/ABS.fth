@@ -1,0 +1,3 @@
+: NEGATE -1 * ;
+: ABS DUP 0 < IF NEGATE THEN ; 
+-30 ABS .

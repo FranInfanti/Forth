@@ -1,29 +1,33 @@
 pub mod error;
 pub mod forth;
 
+use error::Error;
+use forth::Forth;
 use std::{
     fs::File,
-    io::{BufRead, BufReader}
+    io::{BufRead, BufReader},
 };
-
-use forth::Forth;
-
-use error::Error;
 
 const DEFAULT_SIZE: usize = 128;
 
-fn define_word(buf: &str) -> bool {
+fn is_word(buf: &str) -> bool {
     buf.contains(':') && buf.contains(';')
 }
 
-fn parse_word(_forth: &mut Forth, buf: &mut str) -> Result<i16, Error> {
-    let _array: Vec<&str> = buf.split_whitespace().collect();
-    Ok(0)
+fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
+    let aux = buf
+        .trim()
+        .trim_matches([':', ';'])
+        .trim_ascii_end()
+        .trim_ascii_start();
+    let args: Vec<&str> = aux.splitn(2, ' ').collect();
+
+    forth.define_word(args[0].to_string(), args[1].to_string())
 }
 
 fn is_numeric(buf: &str) -> (i16, bool) {
     match buf.parse::<i16>() {
-        Ok(n) => (n, true), 
+        Ok(n) => (n, true),
         Err(_) => (0, false),
     }
 }
@@ -40,6 +44,7 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         "OVER" => forth.over(),
         "ROT" => forth.rot(),
         "." => forth.print_stack(),
+        "EMIT" => forth.emit(),
         "CR" => forth.cr(),
         "=" => forth.igual(),
         "<" => forth.menor(),
@@ -47,33 +52,105 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         "and" => forth.and(),
         "or" => forth.or(),
         "not" => forth.not(),
-        &_ => Ok(0),
+        &_ => Err(Error::MissingWord),
     }
 }
 
-fn procces_arguments(forth: &mut Forth, arg: &str) -> Result<i16, Error> {
-    let (num, is_numeric) = is_numeric(arg);
-    if is_numeric {
-        forth.push(num)?;
+fn process_conditional(
+    forth: &mut Forth,
+    args: &mut Vec<String>,
+    mut i: usize,
+) -> Result<i16, Error> {
+    let result = forth.if_statement()?;
+    args.remove(i);
+
+    if result != 0 {
+        while args[i].ne("ELSE") && args[i].ne("THEN") {
+            i += 1;
+        }
+
+        while args[i].ne("THEN") {
+            args.remove(i);
+        }
+        args.remove(i);
+    } else {
+        while args[i].ne("ELSE") && args[i].ne("THEN") {
+            args.remove(i);
+        }
+
+        while args[i].ne("THEN") {
+            i += 1;
+        }
+        args.remove(i);
     }
 
-    do_operation(forth, arg)?;
     Ok(0)
 }
 
-    // 10 25 +
-    // : MAX DROP IF > ;
-fn procces_line(forth: &mut Forth, buf: &mut str) -> Result<i16, Error> {
-    if define_word(buf) {
-        // Definio la word => no hay mas que procesar en esta linea
-        return parse_word(forth, buf);
+fn process_word(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+    let word_body: Vec<String> = match forth.get_word_body(&args[i]) {
+        Ok(word_body) => word_body
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect(),
+        Err(error) => return Err(error),
+    };
+
+    for word in word_body {
+        args.insert(i + 1, word);
+        i += 1;
     }
 
-    let args: Vec<&str> = buf.split_whitespace().collect();
-    for arg in args {
-        procces_arguments(forth, arg)?;
+    Ok(0)
+}
+
+fn read_line(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
+    if is_word(buf) {
+        return define_word(forth, buf);
     }
-    
+
+    let mut args: Vec<String> = buf.split_whitespace().map(|s| s.to_string()).collect();
+    let mut i = 0;
+    while i < args.len() {
+        if forth.word_exists(&args[i]) {
+            process_word(forth, &mut args, i)?;
+            i += 1;
+            continue;
+        }
+
+        if args[i].eq("IF") {
+            process_conditional(forth, &mut args, i)?;
+            continue;
+        }
+
+        if args[i].eq(".\"") {
+            i += 1;
+
+            let mut string = String::new();
+
+            while !args[i].contains('\"') {
+                string = format!("{} {}", string, args[i]);
+                i += 1;
+            }
+            string = format!("{} {}", string, args[i]);
+            i += 1;
+
+            forth.print_string(string.trim_matches('\"').to_string());
+            continue;
+        }
+
+        let (value, is_numeric) = is_numeric(&args[i]);
+        if is_numeric {
+            forth.push(value)?;
+            i += 1;
+            continue;
+        }
+
+        do_operation(forth, &args[i])?;
+
+        i += 1;
+    }
+
     Ok(0)
 }
 
@@ -82,8 +159,8 @@ fn run(path: String, forth: &mut Forth) -> Result<i16, Error> {
         Ok(file) => file,
         Err(_) => return Err(Error::FileOpenError),
     };
-    let mut reader = BufReader::new(file);
 
+    let mut reader = BufReader::new(file);
     loop {
         let mut buf = String::new();
         let result = match reader.read_line(&mut buf) {
@@ -94,7 +171,7 @@ fn run(path: String, forth: &mut Forth) -> Result<i16, Error> {
             break;
         }
 
-        procces_line(forth, &mut buf)?;
+        read_line(forth, &buf)?;
     }
 
     Ok(0)
@@ -103,12 +180,12 @@ fn run(path: String, forth: &mut Forth) -> Result<i16, Error> {
 fn main() {
     // falta el parsing de comandos
 
-    let path = String::from("data/par.fth");
+    let path = String::from("data/string.fth");
     let stack_size = DEFAULT_SIZE;
     let mut forth = Forth::new(stack_size);
 
     match run(path, &mut forth) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(error) => println!("{}", error),
     }
 }

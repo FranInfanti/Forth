@@ -9,6 +9,7 @@ pub enum Error {
     MissingWord,
     FileOpenError,
     FileReadError,
+    ParsingError,
 }
 
 impl fmt::Display for Error {
@@ -21,6 +22,7 @@ impl fmt::Display for Error {
             Self::MissingWord => write!(f, "?"),
             Self::FileOpenError => write!(f, "file-open-error"),
             Self::FileReadError => write!(f, "file-read-error"),
+            Self::ParsingError => write!(f, "parsing-error"),
         }
     }
 }

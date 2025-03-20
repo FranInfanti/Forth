@@ -94,9 +94,9 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        let mut value = -1;
-        if a < b {
-            value = 0;
+        let mut value = 0;
+        if b > a {
+            value = -1;
         }
 
         self.push(value)?;
@@ -108,9 +108,9 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        let mut value = -1;
-        if a > b {
-            value = 0;
+        let mut value = 0;
+        if b < a {
+            value = -1;
         }
 
         self.push(value)?;
@@ -198,6 +198,16 @@ impl Forth {
         Ok(top)
     }
 
+    pub fn emit(&mut self) -> Result<i16, Error> {
+        let number = self.pop()?;
+        match char::from_u32(number as u32) {
+            Some(char) => print!("{}", char),
+            None => return Err(Error::ParsingError),
+        };
+
+        Ok(number)
+    }
+
     pub fn cr(&mut self) -> Result<i16, Error> {
         println!();
         Ok(0)
@@ -207,11 +217,13 @@ impl Forth {
         println!("{}", string);
     }
 
-    pub fn define_word(
-        &mut self,
-        word_name: String,
-        word_body: String,
-    ) -> Result<i16, Error> {
+    pub fn if_statement(&mut self) -> Result<i16, Error> {
+        let a = self.pop()?;
+
+        if a != 0 { Ok(-1) } else { Ok(0) }
+    }
+
+    pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
         match word_name.parse::<i16>() {
             Ok(_number) => Err(Error::InvalidWord),
             Err(_error) => {
@@ -221,11 +233,15 @@ impl Forth {
         }
     }
 
-    pub fn get_word_body(&mut self, word_name: String) -> Result<&String, Error> {
-        match self.words.get(&word_name) {
+    pub fn get_word_body(&mut self, word_name: &String) -> Result<&String, Error> {
+        match self.words.get(word_name) {
             Some(word_body) => Ok(word_body),
             None => Err(Error::MissingWord),
         }
+    }
+
+    pub fn word_exists(&mut self, word_name: &String) -> bool {
+        self.get_word_body(word_name).is_ok()
     }
 }
 
@@ -344,13 +360,13 @@ mod test {
     #[test]
     pub fn mayor_test() {
         let mut forth = Forth::new(128);
-        let a = 4;
-        let b = 2;
+        let a = 3;
+        let b = 4;
 
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        // b > a ?
+        // 3 4 > => 3 > 4
         match forth.mayor() {
             Ok(result) => assert_eq!(result, 0),
             Err(_) => (),
@@ -360,13 +376,13 @@ mod test {
     #[test]
     pub fn menor_test() {
         let mut forth = Forth::new(128);
-        let a = 10;
-        let b = 1;
+        let a = 3;
+        let b = 4;
 
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        // b < a ?
+        // 3 4 < => 3 < 4
         match forth.menor() {
             Ok(result) => assert_eq!(result, -1),
             Err(_) => (),
@@ -506,8 +522,8 @@ mod test {
 
         let _ = forth.define_word(word_name, word_body);
 
-        match forth.get_word_body(String::from("MAX")) {
-            Ok(result) => assert_eq!("OVER OVER < IF SWAP THEN DROP", *result),
+        match forth.get_word_body(&String::from("MAX")) {
+            Ok(result) => assert_eq!("OVER OVER < IF SWAP THEN DROP", result),
             Err(_) => {}
         }
     }
