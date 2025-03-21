@@ -4,23 +4,21 @@ pub mod forth;
 use error::Error;
 use forth::Forth;
 use std::{
+    env::args,
     fs::File,
     io::{BufRead, BufReader},
 };
 
 const DEFAULT_SIZE: usize = 128;
+const ARGV: usize = 2;
 
 fn is_word(buf: &str) -> bool {
     buf.contains(':') && buf.contains(';')
 }
 
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
-    let aux = buf
-        .trim()
-        .trim_matches([':', ';'])
-        .trim_ascii_end()
-        .trim_ascii_start();
-    let args: Vec<&str> = aux.splitn(2, ' ').collect();
+    let string = buf.trim_matches([':', ';']).trim_ascii();
+    let args: Vec<&str> = string.splitn(2, ' ').collect();
 
     forth.define_word(args[0].to_string(), args[1].to_string())
 }
@@ -30,6 +28,67 @@ fn is_numeric(buf: &str) -> (i16, bool) {
         Ok(n) => (n, true),
         Err(_) => (0, false),
     }
+}
+
+fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+    let word_body: Vec<String> = match forth.get_word_body(&args[i]) {
+        Ok(word_body) => word_body
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect(),
+        Err(error) => return Err(error),
+    };
+
+    for word in word_body {
+        args.insert(i + 1, word);
+        i += 1;
+    }
+
+    Ok(0)
+}
+
+fn process_conditional(
+    forth: &mut Forth,
+    args: &mut Vec<String>,
+    mut i: usize,
+) -> Result<i16, Error> {
+    let result = forth.if_statement()?;
+    args.remove(i);
+
+    while args[i].ne("ELSE") && args[i].ne("THEN") {
+        if result != 0 {
+            i += 1;
+        } else {
+            args.remove(i);
+        }
+    }
+
+    while args[i].ne("THEN") {
+        if result != 0 {
+            args.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+
+    args.remove(i);
+
+    Ok(0)
+}
+
+fn get_string(forth: &mut Forth, args: &mut [String], i: &mut usize) {
+    *i += 1;
+
+    let mut string = String::new();
+
+    while !args[*i].contains('\"') {
+        string = format!("{} {}", string, args[*i]);
+        *i += 1;
+    }
+    string = format!("{} {}", string, args[*i]);
+    *i += 1;
+
+    forth.print_string(string.trim_matches('\"').to_string())
 }
 
 fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
@@ -56,64 +115,16 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     }
 }
 
-fn process_conditional(
-    forth: &mut Forth,
-    args: &mut Vec<String>,
-    mut i: usize,
-) -> Result<i16, Error> {
-    let result = forth.if_statement()?;
-    args.remove(i);
-
-    if result != 0 {
-        while args[i].ne("ELSE") && args[i].ne("THEN") {
-            i += 1;
-        }
-
-        while args[i].ne("THEN") {
-            args.remove(i);
-        }
-        args.remove(i);
-    } else {
-        while args[i].ne("ELSE") && args[i].ne("THEN") {
-            args.remove(i);
-        }
-
-        while args[i].ne("THEN") {
-            i += 1;
-        }
-        args.remove(i);
-    }
-
-    Ok(0)
-}
-
-fn process_word(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
-    let word_body: Vec<String> = match forth.get_word_body(&args[i]) {
-        Ok(word_body) => word_body
-            .split_whitespace()
-            .map(|s| s.to_string())
-            .collect(),
-        Err(error) => return Err(error),
-    };
-
-    for word in word_body {
-        args.insert(i + 1, word);
-        i += 1;
-    }
-
-    Ok(0)
-}
-
 fn read_line(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     if is_word(buf) {
-        return define_word(forth, buf);
+        return define_word(forth, buf.trim());
     }
 
     let mut args: Vec<String> = buf.split_whitespace().map(|s| s.to_string()).collect();
     let mut i = 0;
     while i < args.len() {
         if forth.word_exists(&args[i]) {
-            process_word(forth, &mut args, i)?;
+            get_word_body(forth, &mut args, i)?;
             i += 1;
             continue;
         }
@@ -124,18 +135,7 @@ fn read_line(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         }
 
         if args[i].eq(".\"") {
-            i += 1;
-
-            let mut string = String::new();
-
-            while !args[i].contains('\"') {
-                string = format!("{} {}", string, args[i]);
-                i += 1;
-            }
-            string = format!("{} {}", string, args[i]);
-            i += 1;
-
-            forth.print_string(string.trim_matches('\"').to_string());
+            get_string(forth, &mut args, &mut i);
             continue;
         }
 
@@ -154,7 +154,7 @@ fn read_line(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     Ok(0)
 }
 
-fn run(path: String, forth: &mut Forth) -> Result<i16, Error> {
+fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
     let file = match File::open(path) {
         Ok(file) => file,
         Err(_) => return Err(Error::FileOpenError),
@@ -177,14 +177,49 @@ fn run(path: String, forth: &mut Forth) -> Result<i16, Error> {
     Ok(0)
 }
 
-fn main() {
-    // falta el parsing de comandos
+fn get_stack_size(env: &str) -> Result<usize, Error> {
+    let chars: Vec<&str> = env.splitn(2, '=').collect();
 
-    let path = String::from("data/string.fth");
-    let stack_size = DEFAULT_SIZE;
+    if chars.len() != 2 {
+        return Err(Error::InvalidArguments);
+    }
+
+    match chars[1].parse::<usize>() {
+        Ok(stack_size) => Ok(stack_size),
+        Err(_) => Err(Error::ParsingError),
+    }
+}
+
+fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error> {
+    env.remove(0);
+
+    if env.is_empty() || env.len() > ARGV {
+        return Err(Error::InvalidAmountOfArguments);
+    }
+
+    let mut stack_size = DEFAULT_SIZE;
+    if env.len() == ARGV {
+        stack_size = get_stack_size(&env[1])?;
+    }
+
+    Ok((stack_size, &env[0]))
+}
+
+fn main() {
+    let mut env: Vec<String> = args().collect();
+    let (stack_size, path) = match parse_cmd_arguments(&mut env) {
+        Ok((stack_size, path)) => (stack_size, path),
+        Err(error) => return println!("{}", error),
+    };
+
     let mut forth = Forth::new(stack_size);
 
     match run(path, &mut forth) {
+        Ok(_) => {}
+        Err(error) => println!("{}", error),
+    }
+
+    match forth.write_stack("stack.fth") {
         Ok(_) => {}
         Err(error) => println!("{}", error),
     }

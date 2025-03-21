@@ -1,20 +1,37 @@
 use crate::error;
 
+use error::Error;
 use std::{
     collections::HashMap,
+    fs::{self, File},
+    io::{ErrorKind, Write},
     ops::{BitAnd, BitOr},
 };
 
-use error::Error;
-
+#[derive(Debug)]
 pub struct Forth {
     stack: Vec<i16>,
     stack_size: usize, // En Kb
     words: HashMap<String, String>,
 }
 
+fn open_file(path: &str) -> Result<File, Error> {
+    match File::open(path) {
+        Ok(file) => Ok(file),
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create(path) {
+                Ok(file) => Ok(file),
+                Err(_) => Err(Error::FileCreateError),
+            },
+            _ => {
+                Err(Error::FileOpenError)
+            }
+        },
+    }
+}
+
 impl Forth {
-    pub fn new(size: usize) -> Forth {
+    pub fn new(size: usize) -> Self {
         Forth {
             stack: Vec::<i16>::new(),
             stack_size: size,
@@ -208,12 +225,12 @@ impl Forth {
         Ok(number)
     }
 
-    pub fn cr(&mut self) -> Result<i16, Error> {
+    pub fn cr(&self) -> Result<i16, Error> {
         println!();
         Ok(0)
     }
 
-    pub fn print_string(&mut self, string: String) {
+    pub fn print_string(&self, string: String) {
         println!("{}", string);
     }
 
@@ -242,6 +259,26 @@ impl Forth {
 
     pub fn word_exists(&mut self, word_name: &String) -> bool {
         self.get_word_body(word_name).is_ok()
+    }
+
+    pub fn write_stack(&mut self, path: &str) -> Result<i16, Error> {
+        let mut file = open_file(path)?;
+
+        let mut aux_stack = Vec::<i16>::new();
+        while !self.stack.is_empty() {
+            let value = self.pop()?;
+            aux_stack.push(value);
+        }
+
+        while !aux_stack.is_empty() {
+            let value = match aux_stack.pop() {
+                Some(value) => value,
+                None => return Err(Error::StackError),
+            };
+
+            file.write(value.to_string().as_bytes());
+        }
+        Ok(0)
     }
 }
 
