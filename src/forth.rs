@@ -4,7 +4,7 @@ use error::Error;
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{ErrorKind, Write},
+    io::Write,
     ops::{BitAnd, BitOr},
 };
 
@@ -16,17 +16,14 @@ pub struct Forth {
 }
 
 fn open_file(path: &str) -> Result<File, Error> {
-    match File::open(path) {
+    match fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(path)
+    {
         Ok(file) => Ok(file),
-        Err(error) => match error.kind() {
-            ErrorKind::NotFound => match File::create(path) {
-                Ok(file) => Ok(file),
-                Err(_) => Err(Error::FileCreateError),
-            },
-            _ => {
-                Err(Error::FileOpenError)
-            }
-        },
+        Err(_) => Err(Error::FileOpenError),
     }
 }
 
@@ -231,7 +228,7 @@ impl Forth {
     }
 
     pub fn print_string(&self, string: String) {
-        println!("{}", string);
+        print!("{}", string);
     }
 
     pub fn if_statement(&mut self) -> Result<i16, Error> {
@@ -276,7 +273,11 @@ impl Forth {
                 None => return Err(Error::StackError),
             };
 
-            file.write(value.to_string().as_bytes());
+            let format = format!("{} ", value);
+            match file.write_all(format.as_bytes()) {
+                Ok(_) => continue,
+                Err(_) => return Err(Error::FileWriteError),
+            }
         }
         Ok(0)
     }
