@@ -116,8 +116,18 @@ fn process_conditional(
     mut i: usize,
 ) -> Result<i16, Error> {
     let result = forth.if_statement()?;
+    args.remove(i);
 
-    while args[i].ne("ELSE") && args[i].ne("THEN") {
+    let mut ignorar = false;
+    while ignorar || args[i].ne("ELSE") && args[i].ne("THEN") {
+        if args[i].eq("IF") {
+            ignorar = true;
+        }
+
+        if args[i].eq("THEN") {
+            ignorar = false;
+        }
+        
         if result != 0 {
             i += 1;
         } else {
@@ -125,7 +135,21 @@ fn process_conditional(
         }
     }
 
-    while args[i].ne("THEN") {
+    ignorar = false;
+
+    if args[i].eq("ELSE") {
+        args.remove(i);
+    }
+
+    while ignorar || args[i].ne("THEN") {    
+        if args[i].eq("IF") {
+            ignorar = true;
+        }
+
+        if args[i].eq("THEN") {
+            ignorar = false;
+        }
+           
         if result != 0 {
             args.remove(i);
         } else {
@@ -133,6 +157,7 @@ fn process_conditional(
         }
     }
 
+    args.remove(i);
     Ok(0)
 }
 
@@ -170,40 +195,20 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         "AND" => forth.and(),
         "OR" => forth.or(),
         "NOT" => forth.not(),
-        "THEN" => Ok(0),
         &_ => Err(Error::MissingWord),
     }
 }
 
-fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {    
-    for arg in args.iter() {
-        print!("[{}] ", arg);
-    }   
-
-    println!();
-   
+fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {       
     let mut i = 0;
     while i < args.len() {
         if args[i].contains(":") {
             define_word(forth, &args[i])?;
         } else if forth.word_exists(&args[i]) {
             get_word_body(forth, &mut args, i)?;
-        } else if args[i].eq("IF") {
-            for arg in args.iter() {
-                print!("{} ", arg);
-            }   
-        
-            println!();
-
+        } else if args[i].eq("IF") { 
             process_conditional(forth, &mut args, i)?;
-
-            for arg in args.iter() {
-                print!("{} ", arg);
-            }   
-        
-            println!();
-
-            println!("i = {}", i);
+            continue;
         } else if args[i].eq(".\"") {
             get_string(forth, &mut args, &mut i);
         } else {
@@ -241,7 +246,6 @@ fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
         }
 
         if word_not_complete(&buf) {
-            println!("No esta completo");
             continue;
         }
 
