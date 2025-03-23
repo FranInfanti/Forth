@@ -208,7 +208,7 @@ impl Forth {
 
     pub fn print_stack(&mut self) -> Result<i16, Error> {
         let top = self.pop()?;
-        print!("{}", top);
+        print!("{} ", top);
         Ok(top)
     }
 

@@ -172,32 +172,26 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     }
 }
 
-fn process_args(forth: &mut Forth, args: &mut Vec<String>, i: &mut usize) -> Result<i16, Error> {
-    if args[*i].contains(":") {
-        define_word(forth, &args[*i])?;
-    } else if forth.word_exists(&args[*i]) {
-        get_word_body(forth, args, *i)?;
-    } else if args[*i].eq("IF") {
-        process_conditional(forth, args, *i)?;
-        *i -= 1;
-    } else if args[*i].eq(".\"") {
-        get_string(forth, args, i);
-    } else {
-        let (value, is_numeric) = is_numeric(&args[*i]);
-        if is_numeric {
-            forth.push(value)?;
-        } else {
-            do_operation(forth, &args[*i])?;
-        }
-    }
-
-    Ok(0)
-}
-
 fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
     while i < args.len() {
-        process_args(forth, &mut args, &mut i)?;
+        if args[i].contains(":") {
+            define_word(forth, &args[i])?;
+        } else if forth.word_exists(&args[i]) {
+            get_word_body(forth, &mut args, i)?;
+        } else if args[i].eq("IF") {
+            process_conditional(forth, &mut args, i)?;
+        } else if args[i].eq(".\"") {
+            get_string(forth, &mut args, &mut i);
+        } else {
+            let (value, is_numeric) = is_numeric(&args[i]);
+            if is_numeric {
+                forth.push(value)?;
+            } else {
+                do_operation(forth, &args[i])?;
+            }
+        }
+
         i += 1;
     }
 
@@ -228,7 +222,7 @@ fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
     Ok(0)
 }
 
-fn main() {
+pub fn main() {
     let mut env: Vec<String> = args().collect();
     let (stack_size, path) = match parse_cmd_arguments(&mut env) {
         Ok((stack_size, path)) => (stack_size, path),
