@@ -75,6 +75,10 @@ fn parse_line(buf: &str) -> Vec<String> {
     args
 }
 
+fn word_not_complete(buf: &str) -> bool {
+    buf.contains(':') && !buf.contains(';')
+}
+
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     let string = buf.trim_matches([':', ';']).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
@@ -129,8 +133,6 @@ fn process_conditional(
         }
     }
 
-    args.remove(i);
-
     Ok(0)
 }
 
@@ -168,11 +170,18 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         "AND" => forth.and(),
         "OR" => forth.or(),
         "NOT" => forth.not(),
+        "THEN" => Ok(0),
         &_ => Err(Error::MissingWord),
     }
 }
 
-fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
+fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {    
+    for arg in args.iter() {
+        print!("[{}] ", arg);
+    }   
+
+    println!();
+   
     let mut i = 0;
     while i < args.len() {
         if args[i].contains(":") {
@@ -180,7 +189,21 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
         } else if forth.word_exists(&args[i]) {
             get_word_body(forth, &mut args, i)?;
         } else if args[i].eq("IF") {
+            for arg in args.iter() {
+                print!("{} ", arg);
+            }   
+        
+            println!();
+
             process_conditional(forth, &mut args, i)?;
+
+            for arg in args.iter() {
+                print!("{} ", arg);
+            }   
+        
+            println!();
+
+            println!("i = {}", i);
         } else if args[i].eq(".\"") {
             get_string(forth, &mut args, &mut i);
         } else {
@@ -205,8 +228,9 @@ fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
     };
 
     let mut reader = BufReader::new(file);
+    let mut buf = String::new();
+
     loop {
-        let mut buf = String::new();
         let result = match reader.read_line(&mut buf) {
             Ok(result) => result,
             Err(_) => return Err(Error::FileReadError),
@@ -216,7 +240,13 @@ fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
             break;
         }
 
+        if word_not_complete(&buf) {
+            println!("No esta completo");
+            continue;
+        }
+
         read_line(forth, parse_line(&buf))?;
+        buf.clear();
     }
 
     Ok(0)
