@@ -10,7 +10,7 @@ use std::{
 };
 
 const FILE: &str = "stack.fth";
-const DEFAULT_SIZE: usize = 128;
+const DEFAULT_SIZE: usize = 128; // En Kb
 const ARGV: usize = 2;
 
 fn get_stack_size(env: &str) -> Result<usize, Error> {
@@ -260,10 +260,12 @@ pub fn main() {
     let mut forth = Forth::new(stack_size);
 
     match run(path, &mut forth) {
-        Ok(_) => match forth.write_stack(FILE) {
-            Ok(_) => {}
-            Err(error) => println!("{}", error),
-        },
+        Ok(_) => {}
+        Err(error) => println!("{}", error),
+    }
+
+    match forth.write_stack(FILE) {
+        Ok(_) => {}
         Err(error) => println!("{}", error),
     }
 }

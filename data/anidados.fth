@@ -1,2 +1,2 @@
--1 IF -1 IF -1 IF ." Hallo, Welt!" CR ELSE ." Nada" THEN ELSE ." Nada" THEN ELSE ." Nada" THEN
-0 IF ." No Deberia" ELSE 0 IF ." No Deberia" ELSE -1 IF ." Deberia Imprimir" CR ELSE ." No Deberia" THEN THEN THEN
+-1 IF -1 IF -1 IF ." Hallo, Welt!" CR ELSE ." Nichts" THEN ELSE ." Nichts" THEN ELSE ." Nichts" THEN
+0 IF ." Nein" ELSE 0 IF ." Nein" ELSE -1 IF ." Ja" CR ELSE ." Nein" THEN THEN THEN

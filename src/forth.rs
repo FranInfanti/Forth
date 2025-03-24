@@ -37,9 +37,9 @@ impl Forth {
     }
 
     pub fn push(&mut self, value: i16) -> Result<i16, Error> {
-        let size = (self.stack.len() + 1) * 2;
+        let size = self.stack.len() * 2;
 
-        if size > self.stack_size * 1024 {
+        if self.stack_size * 1024 < size {
             return Err(Error::StackOverflow);
         }
 
