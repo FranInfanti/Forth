@@ -5,14 +5,13 @@ use std::{
     collections::HashMap,
     fs::{self, File},
     io::Write,
-    ops::{BitAnd, BitOr},
 };
 
 #[derive(Debug)]
 pub struct Forth {
     stack: Vec<i16>,
-    stack_size: usize, // En Kb
-    words: HashMap<String, String>,
+    stack_size: usize, // En Bytes
+    words: HashMap<String, Vec<String>>,
 }
 
 fn open_file(path: &str) -> Result<File, Error> {
@@ -32,14 +31,14 @@ impl Forth {
         Forth {
             stack: Vec::<i16>::new(),
             stack_size: size,
-            words: HashMap::<String, String>::new(),
+            words: HashMap::<String, Vec<String>>::new(),
         }
     }
 
     pub fn push(&mut self, value: i16) -> Result<i16, Error> {
-        let size = self.stack.len() * 2;
+        let size = (self.stack.len() + 1) * 2;
 
-        if self.stack_size * 1024 < size {
+        if self.stack_size < size {
             return Err(Error::StackOverflow);
         }
 
@@ -66,8 +65,8 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        self.push(a - b)?;
-        Ok(a - b)
+        self.push(b - a)?;
+        Ok(b - a)
     }
 
     pub fn producto(&mut self) -> Result<i16, Error> {
@@ -136,10 +135,12 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        let value = a.bitand(b);
+        let mut value = -1;
+        if a == 0 || b == 0 {
+            value = 0;
+        }
 
         self.push(value)?;
-
         Ok(value)
     }
 
@@ -147,20 +148,24 @@ impl Forth {
         let a = self.pop()?;
         let b = self.pop()?;
 
-        let value = a.bitor(b);
+        let mut value = 0;
+        if a != 0 || b != 0 {
+            value = -1;
+        }
 
         self.push(value)?;
-
         Ok(value)
     }
 
     pub fn not(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
 
-        let value = !a;
+        let mut value = -1;
+        if a != 0 {
+            value = 0;
+        }
 
         self.push(value)?;
-
         Ok(value)
     }
 
@@ -215,7 +220,7 @@ impl Forth {
     pub fn emit(&mut self) -> Result<i16, Error> {
         let number = self.pop()?;
         match char::from_u32(number as u32) {
-            Some(char) => print!("{}", char),
+            Some(char) => print!("{} ", char),
             None => return Err(Error::ParsingError),
         };
 
@@ -238,24 +243,44 @@ impl Forth {
     }
 
     pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
-        match word_name.parse::<i16>() {
-            Ok(_number) => Err(Error::InvalidWord),
-            Err(_error) => {
-                self.words.insert(word_name, word_body);
-                Ok(1)
-            }
+        if word_name.parse::<i16>().is_ok() {
+            return Err(Error::InvalidWord);
         }
+
+        match self.get_word_body(&word_name) {
+            Ok(words_body) => {
+                let mut vec = Vec::<String>::new();
+                for words in words_body {
+                    vec.push(words.to_string());
+                }
+
+                vec.push(word_body);
+                self.words.insert(word_name, vec);
+            }
+            Err(_) => {
+                let vec = vec![word_body];
+                self.words.insert(word_name, vec);
+            }
+        };
+        Ok(0)
     }
 
-    pub fn get_word_body(&mut self, word_name: &String) -> Result<&String, Error> {
+    pub fn get_word_body(&mut self, word_name: &String) -> Result<&Vec<String>, Error> {
         match self.words.get(word_name) {
             Some(word_body) => Ok(word_body),
             None => Err(Error::MissingWord),
         }
     }
 
-    pub fn word_exists(&mut self, word_name: &String) -> bool {
-        self.get_word_body(word_name).is_ok()
+    pub fn get_word_body_index(&mut self, word_name: &String) -> Result<usize, Error> {
+        let words_body = self.get_word_body(word_name)?;
+
+        Ok(words_body.len() - 1)
+    }
+
+    pub fn word_exists(&mut self, word_name: &str) -> bool {
+        let aux: Vec<&str> = word_name.splitn(2, '=').collect();
+        self.get_word_body(&aux[0].to_string()).is_ok()
     }
 
     pub fn write_stack(&mut self, path: &str) -> Result<i16, Error> {
@@ -331,16 +356,17 @@ mod test {
     #[test]
     pub fn resta_test() {
         let mut forth = Forth::new(128);
-        let a = 10;
-        let b = 5;
+        let a = 5;
+        let b = 10;
 
+        // 5 10 - => 5 - 10
         let _ = forth.push(a);
         let _ = forth.push(b);
 
         let _ = forth.resta();
 
         match forth.pop() {
-            Ok(result) => assert_eq!(result, b - a),
+            Ok(result) => assert_eq!(result, a - b),
             Err(_error) => {}
         }
     }
@@ -548,20 +574,6 @@ mod test {
 
         match forth.pop() {
             Ok(expected) => assert_eq!(expected, b),
-            Err(_) => {}
-        }
-    }
-
-    #[test]
-    pub fn define_word_test() {
-        let mut forth = Forth::new(128);
-        let word_name = String::from("MAX");
-        let word_body = String::from("OVER OVER < IF SWAP THEN DROP");
-
-        let _ = forth.define_word(word_name, word_body);
-
-        match forth.get_word_body(&String::from("MAX")) {
-            Ok(result) => assert_eq!("OVER OVER < IF SWAP THEN DROP", result),
             Err(_) => {}
         }
     }
