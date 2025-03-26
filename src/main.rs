@@ -20,6 +20,50 @@ const START_STRING: &str = ".\"";
 const START_WORD: char = ':';
 const END_WORD: char = ';';
 
+fn split_string(chars: &Vec<char>, i: &mut usize) -> String {
+    let mut string = String::from(START_STRING);
+
+    *i += 2;
+    loop {
+        string = format!("{}{}", string, chars[*i]);
+        if chars[*i] == '"' {
+            break;
+        }
+        *i += 1;
+    }
+    *i += 1;
+
+    string.trim().to_string()
+}
+
+fn split(buf: &str) -> Vec<String> {
+    let mut split = Vec::<String>::new();
+    let chars: Vec<char> = buf.trim().chars().collect();
+    
+    let mut i = 0;
+    while i < chars.len() {
+        let mut string = String::new();
+        while i < chars.len() && chars[i] != ' ' {
+            if i + 1 < chars.len() && chars[i] == '.' && chars[i + 1] == '"' {
+                split.push(split_string(&chars, &mut i));
+                break;
+            }
+            
+            string = format!("{}{}", string, chars[i].to_lowercase());
+            i += 1;
+        }
+
+        if !string.is_empty() {
+            split.push(string.trim().to_string());
+        }
+
+        while i < chars.len() && chars[i] == ' ' {
+            i += 1;
+        }
+    }
+    split
+}
+
 fn get_stack_size(env: &str) -> Result<usize, Error> {
     let chars: Vec<&str> = env.splitn(2, '=').collect();
 
@@ -52,7 +96,7 @@ fn word_not_complete(buf: &str) -> bool {
     buf.contains(START_WORD) && !buf.contains(END_WORD)
 }
 
-fn parse_word(cmds: &[&str], i: &mut usize) -> String {
+fn parse_word(cmds: &Vec<String>, i: &mut usize) -> String {
     let mut word = String::new();
 
     loop {
@@ -69,8 +113,7 @@ fn parse_word(cmds: &[&str], i: &mut usize) -> String {
 }
 
 fn parse_line(buf: &str) -> Vec<String> {
-    let cmds: Vec<&str> = buf.split_whitespace().collect();
-
+    let cmds = split(buf.trim());
     let mut args = Vec::<String>::new();
     let mut i = 0;
 
@@ -88,7 +131,8 @@ fn parse_line(buf: &str) -> Vec<String> {
 }
 
 fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
-    let words: Vec<&str> = word_body.split_whitespace().collect();
+    let words = split(word_body);
+    
     let mut final_word_body = String::new();
 
     for word in words {
@@ -128,7 +172,7 @@ fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Res
         index = words_body.len() - 1;
     }
 
-    let word_body: Vec<&str> = words_body[index].split_whitespace().collect();
+    let word_body = split(&words_body[index]);
     for word in word_body {
         args.insert(i + 1, word.to_string());
         i += 1;
@@ -181,18 +225,21 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
-fn get_string(forth: &mut Forth, args: &mut [String], i: &mut usize) {
-    *i += 1;
-
+fn print_string(forth: &mut Forth, string: &String) {
+    let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
 
-    while !args[*i].contains('\"') {
-        string = format!("{} {}", string, args[*i]);
-        *i += 1;
-    }
-    string = format!("{} {}", string, args[*i]);
+    let mut i = 3;  // ignora ' ." (space) '
+    while i < chars.len() {
+        if chars[i] == '"' {
+            break;
+        }
 
-    forth.print_string(string.trim_matches('\"').to_string())
+        string = format!("{}{}", string, chars[i]);
+        i += 1;
+    }
+
+    forth.print_string(string.to_string());
 }
 
 fn is_numeric(buf: &str) -> (i16, bool) {
@@ -229,8 +276,6 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
 fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
     while i < args.len() {
-        //println!("CMD = {:?}", args);
-
         if args[i].contains(START_WORD) {
             define_word(forth, &args[i])?;
         } else if forth.word_exists(&args[i]) {
@@ -238,8 +283,8 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
         } else if args[i].eq(IF) {
             if_statement(forth, &mut args, i)?;
             continue;
-        } else if args[i].eq(START_STRING) {
-            get_string(forth, &mut args, &mut i);
+        } else if args[i].contains(START_STRING) {
+            print_string(forth, &args[i]);
         } else {
             let (value, is_numeric) = is_numeric(&args[i]);
             if is_numeric {
@@ -293,7 +338,7 @@ pub fn main() {
     };
 
     let mut forth = Forth::new(stack_size);
-
+    
     match run(path, &mut forth) {
         Ok(_) => {}
         Err(error) => println!("{}", error),
@@ -304,3 +349,4 @@ pub fn main() {
         Err(error) => println!("{}", error),
     }
 }
+

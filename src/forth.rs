@@ -233,7 +233,7 @@ impl Forth {
     }
 
     pub fn print_string(&self, string: String) {
-        print!("{}", string);
+        print!("{} ", string);
     }
 
     pub fn if_statement(&mut self) -> Result<i16, Error> {
