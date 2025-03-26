@@ -20,7 +20,7 @@ const START_STRING: &str = ".\"";
 const START_WORD: char = ':';
 const END_WORD: char = ';';
 
-fn split_string(chars: &Vec<char>, i: &mut usize) -> String {
+fn split_string(chars: &[char], i: &mut usize) -> String {
     let mut string = String::from(START_STRING);
 
     *i += 2;
@@ -39,7 +39,7 @@ fn split_string(chars: &Vec<char>, i: &mut usize) -> String {
 fn split(buf: &str) -> Vec<String> {
     let mut split = Vec::<String>::new();
     let chars: Vec<char> = buf.trim().chars().collect();
-    
+
     let mut i = 0;
     while i < chars.len() {
         let mut string = String::new();
@@ -48,7 +48,7 @@ fn split(buf: &str) -> Vec<String> {
                 split.push(split_string(&chars, &mut i));
                 break;
             }
-            
+
             string = format!("{}{}", string, chars[i].to_lowercase());
             i += 1;
         }
@@ -96,7 +96,7 @@ fn word_not_complete(buf: &str) -> bool {
     buf.contains(START_WORD) && !buf.contains(END_WORD)
 }
 
-fn parse_word(cmds: &Vec<String>, i: &mut usize) -> String {
+fn parse_word(cmds: &[String], i: &mut usize) -> String {
     let mut word = String::new();
 
     loop {
@@ -132,7 +132,7 @@ fn parse_line(buf: &str) -> Vec<String> {
 
 fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
     let words = split(word_body);
-    
+
     let mut final_word_body = String::new();
 
     for word in words {
@@ -225,11 +225,11 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
-fn print_string(forth: &mut Forth, string: &String) {
+fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
 
-    let mut i = 3;  // ignora ' ." (space) '
+    let mut i = 3; // ignora ' ." (space) '
     while i < chars.len() {
         if chars[i] == '"' {
             break;
@@ -338,7 +338,7 @@ pub fn main() {
     };
 
     let mut forth = Forth::new(stack_size);
-    
+
     match run(path, &mut forth) {
         Ok(_) => {}
         Err(error) => println!("{}", error),
@@ -349,4 +349,3 @@ pub fn main() {
         Err(error) => println!("{}", error),
     }
 }
-
