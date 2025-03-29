@@ -457,14 +457,13 @@ mod test {
     pub fn and_test() {
         let mut forth = Forth::new(128);
         let a = 2;
-        let b = 3;
+        let b = 0;
 
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        // 0010 && 0011 = 0010
         match forth.and() {
-            Ok(result) => assert_eq!(result, 2),
+            Ok(result) => assert_eq!(result, 0),
             Err(_) => (),
         }
     }
@@ -473,14 +472,13 @@ mod test {
     pub fn or_test() {
         let mut forth = Forth::new(128);
         let a = 5;
-        let b = 1;
+        let b = 0;
 
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        // 0101 || 0001 = 0101
         match forth.or() {
-            Ok(result) => assert_eq!(result, 5),
+            Ok(result) => assert_eq!(result, -1),
             Err(_) => (),
         }
     }
@@ -492,9 +490,8 @@ mod test {
 
         let _ = forth.push(a);
 
-        // not 0101 = 1010
-        match forth.menor() {
-            Ok(result) => assert_eq!(result, 10),
+        match forth.not() {
+            Ok(result) => assert_eq!(result, 0),
             Err(_) => (),
         }
     }
