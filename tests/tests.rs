@@ -125,7 +125,10 @@ fn test_native_operations() {
         .output()
         .unwrap();
 
-    let expected: Vec<i16> = vec![1, 1, 1, 2, 2, 1, 2, 1, 1, 3, 2, 1, 2, 1, 1, 2, 3, 2, 2, 3, 1, 1, 2, 3, 1, 1, 1, 1, 1, 2, 3, 4, 1, 1, 2, 1, 2, 1];
+    let expected: Vec<i16> = vec![
+        1, 1, 1, 2, 2, 1, 2, 1, 1, 3, 2, 1, 2, 1, 1, 2, 3, 2, 2, 3, 1, 1, 2, 3, 1, 1, 1, 1, 1, 2,
+        3, 4, 1, 1, 2, 1, 2, 1,
+    ];
     let output = read_file();
 
     let mut output_correct = true;
@@ -150,7 +153,7 @@ fn test_output_operations() {
 
     let expected = b"A B C D hola mundo hello      world! hallo \nwelt 1 \n\n2";
     let stdout = output.stdout.to_vec();
-    
+
     let mut i = 0;
     let mut output_correct = true;
     while i < expected.len() {
@@ -158,7 +161,7 @@ fn test_output_operations() {
             output_correct = false;
             break;
         }
-        
+
         i += 1;
     }
 
@@ -182,7 +185,7 @@ fn test_error_stack_underflow() {
             output_correct = false;
             break;
         }
-        
+
         i += 1;
     }
 
@@ -209,7 +212,7 @@ fn test_error_stack_overflow() {
             output_correct = false;
             break;
         }
-        
+
         i += 1;
     }
 

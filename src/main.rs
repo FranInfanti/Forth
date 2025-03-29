@@ -10,7 +10,7 @@ use std::{
 };
 
 const FILE: &str = "stack.fth";
-const DEFAULT_SIZE: usize = 128 * 1024; // En Bytes
+const DEFAULT_SIZE: usize = 128 * 1024;
 const ARGV: usize = 2;
 
 const IF: &str = "if";
@@ -20,6 +20,7 @@ const START_STRING: &str = ".\"";
 const START_WORD: char = ':';
 const END_WORD: char = ';';
 
+/// Realiza el join de chars a String de forma correcta, es decir, respetando los espacios.
 fn split_string(chars: &[char], i: &mut usize) -> String {
     let mut string = String::from(START_STRING);
 
@@ -36,6 +37,14 @@ fn split_string(chars: &[char], i: &mut usize) -> String {
     string.trim().to_string()
 }
 
+/// Implementación propia de la función nativa split(), con la diferencia de que se respeta los espacios definidos en los strings. Ejemplo: 
+///     
+///     input = : HALLO ." Hallo    Welt!"
+///     output = [": HALLO ." Hallo    Welt!"" ]
+/// 
+///     input = -1 IF ." True   " THEN
+///     output = ["-1", "IF", "." True   "", "THEN"]
+/// 
 fn split(buf: &str) -> Vec<String> {
     let mut split = Vec::<String>::new();
     let chars: Vec<char> = buf.trim().chars().collect();
@@ -64,6 +73,7 @@ fn split(buf: &str) -> Vec<String> {
     split
 }
 
+/// Obtiene a partir de los argumentos proporcionados al programa el valor del stack-size.
 fn get_stack_size(env: &str) -> Result<usize, Error> {
     let chars: Vec<&str> = env.splitn(2, '=').collect();
 
@@ -77,6 +87,10 @@ fn get_stack_size(env: &str) -> Result<usize, Error> {
     }
 }
 
+/// Parsea los argumentos proporcionados al programa, obteniendo el nombre del archivo.fth y el stack-size. Ejemplo
+/// 
+///     input = ["data/native.fth", "stack-size=10"]
+///     output = (10, "data/native.fth")
 fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error> {
     env.remove(0);
 
@@ -112,6 +126,13 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
     word.to_lowercase().trim().to_string()
 }
 
+/// Parsea el input leido del archivo a una estuctura de datos conveniente. Ejemplo:
+/// 
+///     input = : MAX OVER OVER < IF SWAP THEN DROP ;
+///     output = [": MAX OVER OVER < IF SWAP THEN DROP ;"]
+/// 
+///     input = 1 2 + IF DROP THEN
+///     output = ["1", "2", "+", "IF", "DROP", "THEN"]
 fn parse_line(buf: &str) -> Vec<String> {
     let cmds = split(buf.trim());
     let mut args = Vec::<String>::new();
@@ -190,6 +211,7 @@ fn count_anidados(buf: &str) -> i16 {
     }
 }
 
+/// Procesa las operaciones condicionales: IF, determinando que lado de la condición ejecutar.
 fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let result = forth.if_statement()?;
     args.remove(i);
@@ -197,7 +219,6 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     let mut anidados = 0;
     while anidados > 0 || args[i].ne(ELSE) && args[i].ne(THEN) {
         anidados += count_anidados(&args[i]);
-
         if result != 0 {
             i += 1;
         } else {
@@ -213,7 +234,6 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
 
     while anidados > 0 || args[i].ne(THEN) {
         anidados += count_anidados(&args[i]);
-
         if result != 0 {
             args.remove(i);
         } else {
@@ -225,6 +245,7 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
+/// Se encarga de extraer el String de string para poder mostrarlo por stdout. 
 fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
@@ -242,6 +263,7 @@ fn print_string(forth: &mut Forth, string: &str) {
     forth.print_string(string.to_string());
 }
 
+/// Determina si es posible realizar el parseo de String a i16, en caso de ser posible devuelve dicho parseo y en ambos casos con true o false devuelve si se pudo realizar.
 fn is_numeric(buf: &str) -> (i16, bool) {
     match buf.parse::<i16>() {
         Ok(n) => (n, true),
@@ -249,6 +271,7 @@ fn is_numeric(buf: &str) -> (i16, bool) {
     }
 }
 
+/// Realiza un match con las operaciones nativas del interprete
 fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     match buf {
         "+" => forth.suma(),
@@ -273,6 +296,7 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     }
 }
 
+/// Se encarga de determinar que operación debe realizarse sobre la linea leida.
 fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
     while i < args.len() {
@@ -300,6 +324,7 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     Ok(0)
 }
 
+/// Se encarga de leer una linea y ejecutarla.
 fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
     let file = match File::open(path) {
         Ok(file) => file,

@@ -8,9 +8,13 @@ use std::{
 };
 
 #[derive(Debug)]
+/// Struct que se utiliza para representar la estructura interna del interprete de Forth.
 pub struct Forth {
+    /// Representa el stack de ejecución del interprete.
     stack: Vec<i16>,
-    stack_size: usize, // En Bytes
+    /// Representa el tamaño del stack de ejecución del interprete, en Bytes.
+    stack_size: usize,
+    /// Representa las words definidas en tiempo de ejecución, donde el word-name es la clave y el word-body un elemento. Se almacenan todas las definiciones historicas para dicho word-name.
     words: HashMap<String, Vec<String>>,
 }
 
@@ -26,6 +30,7 @@ fn open_file(path: &str) -> Result<File, Error> {
     }
 }
 
+/// El struct Forth implementa todas las operaciones nativas del lenguaje.
 impl Forth {
     pub fn new(size: usize) -> Self {
         Forth {
