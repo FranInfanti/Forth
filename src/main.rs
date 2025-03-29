@@ -106,10 +106,15 @@ fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error>
     Ok((stack_size, &env[0]))
 }
 
+/// Determina si el word se encuentra completo, desde incio ':' hasta fin ';' en la misma linea.
 fn word_not_complete(buf: &str) -> bool {
     buf.contains(START_WORD) && !buf.contains(END_WORD)
 }
 
+/// Parsea de forma especifica los words. Ejemplo:
+///     
+///     input = : IF IF -1 THEN ;
+///     output = [": IF -1 THEN ;"]
 fn parse_word(cmds: &[String], i: &mut usize) -> String {
     let mut word = String::new();
 
@@ -151,6 +156,7 @@ fn parse_line(buf: &str) -> Vec<String> {
     args
 }
 
+/// Realiza la expansión de los words que hacen referencia a words definidos previamente, claramente todo esto en tiempo de ejecución.
 fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
     let words = split(word_body);
 
@@ -168,6 +174,8 @@ fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error>
     Ok(final_word_body.trim().to_string())
 }
 
+/// Parsea el buf para obtener el word-name y el word-body, y de esta forma poder definir el word.
+/// En caso de que el word-body contenga un word que hace referencia a un word propio, lo que se hace es definirlo como word=index, siendo index la posición en el Vec<String> de words-body de dicho word-name.
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     let string = buf.trim_matches([START_WORD, END_WORD]).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
@@ -178,6 +186,7 @@ fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     forth.define_word(word_name, word_body)
 }
 
+/// Obtiene el word-body a partir de un word-name.
 fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let words_body: &Vec<String>;
     let index: usize;
