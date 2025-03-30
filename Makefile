@@ -5,6 +5,9 @@ FILE =
 STACK = 
 
 run:
+	cargo run -- $(FILE)
+
+run-stack:
 	cargo run -- $(FILE) stack-size=$(STACK)
 
 test:

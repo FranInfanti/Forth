@@ -14,7 +14,7 @@ pub struct Forth {
     stack: Vec<i16>,
     /// Tamaño del stack de ejecución, en Bytes.
     stack_size: usize,
-    /// Definición de words, word-name es la clave y el word-body un value.
+    /// Definición de words, word-name es la clave y word-body el value.
     words: HashMap<String, Vec<String>>,
 }
 
@@ -31,7 +31,9 @@ fn open_file(path: &str) -> Result<File, Error> {
 }
 
 impl Forth {
-    /// Crea y retorna un struct Forth.
+    /// Crea un struct Forth con un stack de size pasado por
+    /// parametro.
+    /// Retorna el struct Forth.
     ///
     /// # Errors
     ///

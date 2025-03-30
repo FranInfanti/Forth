@@ -177,7 +177,7 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
         *i += 1;
     }
 
-    word.to_lowercase().trim().to_string()
+    word.trim().to_string()
 }
 
 /// Parsea un String a un formato conveniente.
@@ -204,7 +204,7 @@ fn parse_line(buf: &str) -> Vec<String> {
             continue;
         }
 
-        args.push(cmds[i].to_ascii_lowercase().to_string());
+        args.push(cmds[i].to_string());
         i += 1;
     }
 
@@ -219,6 +219,17 @@ fn parse_line(buf: &str) -> Vec<String> {
 ///
 /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
 /// un word que no se encuentra definido.
+///
+/// # Example
+///
+/// ```
+///     // : foo 1 ;
+///     // : foo 2 ;
+///     let buf = ": bar foo 3 + ;"
+///     define_word(forth, buf);
+///     // word-name = "bar";
+///     // word-body = "foo=1 3 +";
+/// ```
 ///
 fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
     let words = split(word_body);
@@ -245,6 +256,15 @@ fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error>
 /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
 /// un word que no se encuentra definido.
 ///
+/// # Example
+///
+/// ```
+///     let buf = ": bar dup 3 + ;"
+///     define_word(forth, buf);
+///     // word-name = "bar";
+///     // word-body = "dup 3 +";
+/// ```
+///
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     let string = buf.trim_matches([START_WORD, END_WORD]).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
@@ -263,6 +283,16 @@ fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
 ///
 /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
 /// un word que no se encuentra definido.
+///
+/// # Example
+///
+/// ```
+///     // : foo 1;
+///     // : bar foo ;
+///     let mut args = vec!["bar=0"];
+///     get_word_body(forth, &mut args, 0);
+///     // args = ["bar=0", "1"]
+/// ```
 ///
 fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let words_body: &Vec<String>;
@@ -306,6 +336,13 @@ fn count_anidados(buf: &str) -> i16 {
 /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
 /// un elemento de un stack vacio.
 ///
+/// # Example
+///
+/// ```
+///     let mut args = vec!["0", "-1", "+", "IF", "1", "+", "ELSE", "0", "/", "THEN"];
+///     if_statement(forth, &mut args, 3);
+///     // args = ["0", "-1", "+", "1", "+"];
+/// ```
 fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let result = forth.if_statement()?;
     args.remove(i);
@@ -342,6 +379,13 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
 ///
 /// # Errors
 ///
+/// # Example
+///
+/// ```
+///     let str = ".\" Hola Mundo\"";
+///     print_string(forth, str);
+///     // stdout = Hola Mundo
+/// ```
 fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
@@ -359,6 +403,14 @@ fn print_string(forth: &mut Forth, string: &str) {
     forth.print_string(string.to_string());
 }
 
+/// Intenta parsear un &str a un i16.
+/// Retorna, en caso de exito, el valor parseado y un booleano
+/// con valor true que indica el exito de la operación.
+/// Retorna, en caso de error, 0 y un booleano con valor false
+/// indicando que no se pudo
+///
+/// # Errors
+///
 fn is_numeric(buf: &str) -> (i16, bool) {
     match buf.parse::<i16>() {
         Ok(n) => (n, true),

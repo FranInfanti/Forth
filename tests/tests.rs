@@ -151,7 +151,7 @@ fn test_output_operations() {
         .output()
         .unwrap();
 
-    let expected = b"A B C D hola mundo hello      world! hallo \nwelt 1 \n\n2";
+    let expected = b"A B C D Hola Mundo Hello      World! Hallo \nWelt 1 \n\n2";
     let stdout = output.stdout.to_vec();
 
     let mut i = 0;
