@@ -297,6 +297,15 @@ fn count_anidados(buf: &str) -> i16 {
     }
 }
 
+/// Se encarga de procesar la condición del if, haciendo la evaluación y
+/// determinando que rama tomar.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
+/// un elemento de un stack vacio.
+///
 fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let result = forth.if_statement()?;
     args.remove(i);
@@ -329,6 +338,10 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
+/// Extrae del formato de strings, el String a mostrar por stdout.
+///
+/// # Errors
+///
 fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
