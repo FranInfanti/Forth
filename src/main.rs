@@ -37,14 +37,14 @@ fn split_string(chars: &[char], i: &mut usize) -> String {
     string.trim().to_string()
 }
 
-/// Implementación propia de la función nativa split(), con la diferencia de que se respeta los espacios definidos en los strings. Ejemplo: 
+/// Implementación propia de la función nativa split(), con la diferencia de que se respeta los espacios definidos en los strings. Ejemplo:
 ///     
 ///     input = : HALLO ." Hallo    Welt!"
 ///     output = [": HALLO ." Hallo    Welt!"" ]
-/// 
+///
 ///     input = -1 IF ." True   " THEN
 ///     output = ["-1", "IF", "." True   "", "THEN"]
-/// 
+///
 fn split(buf: &str) -> Vec<String> {
     let mut split = Vec::<String>::new();
     let chars: Vec<char> = buf.trim().chars().collect();
@@ -88,7 +88,7 @@ fn get_stack_size(env: &str) -> Result<usize, Error> {
 }
 
 /// Parsea los argumentos proporcionados al programa, obteniendo el nombre del archivo.fth y el stack-size. Ejemplo
-/// 
+///
 ///     input = ["data/native.fth", "stack-size=10"]
 ///     output = (10, "data/native.fth")
 fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error> {
@@ -132,10 +132,10 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
 }
 
 /// Parsea el input leido del archivo a una estuctura de datos conveniente. Ejemplo:
-/// 
+///
 ///     input = : MAX OVER OVER < IF SWAP THEN DROP ;
 ///     output = [": MAX OVER OVER < IF SWAP THEN DROP ;"]
-/// 
+///
 ///     input = 1 2 + IF DROP THEN
 ///     output = ["1", "2", "+", "IF", "DROP", "THEN"]
 fn parse_line(buf: &str) -> Vec<String> {
@@ -165,7 +165,7 @@ fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error>
     for word in words {
         let mut w = word.to_string();
         if forth.word_exists(&w) {
-            let index = forth.get_word_body_index(&w)?;
+            let index = forth.get_word_body_len(&w)?;
             w = format!("{}={}", w, index);
         }
         final_word_body = format!("{} {}", final_word_body, w);
@@ -254,7 +254,7 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
-/// Se encarga de extraer el String de string para poder mostrarlo por stdout. 
+/// Se encarga de extraer el String de string para poder mostrarlo por stdout.
 fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();

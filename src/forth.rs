@@ -8,13 +8,13 @@ use std::{
 };
 
 #[derive(Debug)]
-/// Struct que se utiliza para representar la estructura interna del interprete de Forth.
+/// Tipo para representar la estructura del interprete de Forth.
 pub struct Forth {
-    /// Representa el stack de ejecución del interprete.
+    /// Stack de ejecución del interprete.
     stack: Vec<i16>,
-    /// Representa el tamaño del stack de ejecución del interprete, en Bytes.
+    /// Tamaño del stack de ejecución, en Bytes.
     stack_size: usize,
-    /// Representa las words definidas en tiempo de ejecución, donde el word-name es la clave y el word-body un elemento. Se almacenan todas las definiciones historicas para dicho word-name.
+    /// Definición de words, word-name es la clave y el word-body un value.
     words: HashMap<String, Vec<String>>,
 }
 
@@ -30,8 +30,11 @@ fn open_file(path: &str) -> Result<File, Error> {
     }
 }
 
-/// El struct Forth implementa todas las operaciones nativas del lenguaje.
 impl Forth {
+    /// Crea y retorna un struct Forth.
+    ///
+    /// # Errors
+    ///
     pub fn new(size: usize) -> Self {
         Forth {
             stack: Vec::<i16>::new(),
@@ -40,6 +43,14 @@ impl Forth {
         }
     }
 
+    /// Añade un elemento de 16 bits al stack de ejecución.
+    /// Retorna el elemento añadido.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se sobrepasa
+    /// el tamaño del stack.
+    ///
     pub fn push(&mut self, value: i16) -> Result<i16, Error> {
         let size = (self.stack.len() + 1) * 2;
 
@@ -51,6 +62,14 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma y retorna el ultimo elemento del stack de ejecución.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// el ultimo elemento de un stack vacio.
+    /// in the PE32 image.
+    ///
     pub fn pop(&mut self) -> Result<i16, Error> {
         match self.stack.pop() {
             Some(value) => Ok(value),
@@ -58,6 +77,18 @@ impl Forth {
         }
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los suma, 
+    /// añadiendo el resultado de la suma al stack de ejecución.
+    /// Retorna el resultado de la suma.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn suma(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -66,6 +97,18 @@ impl Forth {
         Ok(a + b)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los resta, 
+    /// añadiendo el resultado de la resta al stack de ejecución.
+    /// Retorna el resultado de la resta.
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn resta(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -74,6 +117,18 @@ impl Forth {
         Ok(b - a)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y hace el 
+    /// producto entre ellos, añadiendo el resultado del producto al stack de ejecución.
+    /// Retorna el resultado de la multiplicación.
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn producto(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -82,6 +137,21 @@ impl Forth {
         Ok(a * b)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los divide, 
+    /// añadiendo el resultado de la división al stack de ejecución.
+    /// Retorna el resultado de la división.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    /// 
+    /// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
+    /// una división por cero.
+    ///
     pub fn division(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -94,6 +164,19 @@ impl Forth {
         Ok(b / a)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los compara
+    /// para determinar si son iguales, añade al stack de ejecución -1 si es
+    /// verdadero y 0 en caso contrario.
+    /// Retorna el resultado de la comparación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn igual(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -108,6 +191,19 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los compara
+    /// para determinar si el segundo elemento tomado es mayor al primero, 
+    /// añade al stack de ejecución -1 si es verdadero y 0 en caso contrario.
+    /// Retorna el resultado de la comparación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn mayor(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -122,6 +218,19 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y los compara
+    /// para determinar si el segundo elemento tomado es menor al primero, 
+    /// añade al stack de ejecución -1 si es verdadero y 0 en caso contrario.
+    /// Retorna el resultado de la comparación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn menor(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -136,6 +245,19 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y aplica la 
+    /// operación "and", considerando que todo elemento distinto de cero es 
+    /// verdadero o -1 y todo elemento igual a cero es falso o 0.
+    /// Retorna el resultado de la operación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn and(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -149,6 +271,19 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma los dos ultimos elementos del stack de ejecución y aplica la 
+    /// operación "or", considerando que todo elemento distinto de cero es 
+    /// verdadero o -1 y todo elemento igual a cero es falso o 0.
+    /// Retorna el resultado de la operación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn or(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -162,6 +297,19 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma el ultimo elemento del stack de ejecución y aplica la 
+    /// operación "not", considerando que todo elemento distinto de cero es 
+    /// verdadero o -1 y todo elemento igual a cero es falso o 0.
+    /// Retorna el resultado de la operación.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn not(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
 
@@ -174,6 +322,18 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma el ultimo elemento del stack y lo duplica, insertando tambien la 
+    /// copia en el stack de ejecución.
+    /// Retorna el valor del elemento duplicado.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn dup(&mut self) -> Result<i16, Error> {
         let value = self.pop()?;
         let copy = value;
@@ -184,10 +344,33 @@ impl Forth {
         Ok(value)
     }
 
+    /// Toma y descarta el ultimo elemento del stack de ejecución.
+    /// Retorna el valor del elemento descartado.
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn drop(&mut self) -> Result<i16, Error> {
         self.pop()
     }
 
+    /// Intercambia la posición de los dos ultimos elementos del stack de
+    /// ejecución.
+    /// Retorna el valor del elemento que quedo en el tope del stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn swap(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -196,6 +379,19 @@ impl Forth {
         self.push(b)
     }
 
+    /// Toma el segundo elemento del stack y lo dupica, insertando dicha copia
+    /// en el ultimo lugar del stack. Todos los demas elementos conservan su 
+    /// posición actual.
+    /// Retorna el valor del elemento que quedo en el tope del stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn over(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -206,6 +402,18 @@ impl Forth {
         self.push(c)
     }
 
+    /// Realiza un intercambio de posiciones entre los ultimos tres elementos
+    /// del stack de ejecución.
+    /// Retorna el valor del elemento que quedo en el tope del stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn rot(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
@@ -216,12 +424,38 @@ impl Forth {
         self.push(c)
     }
 
+    /// Imprime por stdout el ultimo elemento del stack, consumiendo su valor.
+    /// Retorna el elemento mostrado por el stdout.
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn print_stack(&mut self) -> Result<i16, Error> {
         let top = self.pop()?;
         print!("{} ", top);
         Ok(top)
     }
 
+    /// Imprime por stdout el ultimo elemento del stack, consumiendo su
+    /// valor, pero en formato char. 
+    /// Retorna el valor del elemento mostrado por stdout en i16.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
+    /// un elemento a un stack completo.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    /// 
+    /// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
     pub fn emit(&mut self) -> Result<i16, Error> {
         let number = self.pop()?;
         match char::from_u32(number as u32) {
@@ -232,21 +466,46 @@ impl Forth {
         Ok(number)
     }
 
+    /// Imprime por stdout un salto de linea.
+    /// Retorna 0.
+    ///
+    /// # Errors
+    ///
     pub fn cr(&self) -> Result<i16, Error> {
         println!();
         Ok(0)
     }
 
+    /// Imprime por stdout un string proporcionado como argumento.
+    ///
+    /// # Errors
+    ///
     pub fn print_string(&self, string: String) {
         print!("{} ", string);
     }
 
+    /// Toma el ultimo elemento del stack y verifica si es verdadero o falso.
+    /// Retorna el resultado del if.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    /// 
     pub fn if_statement(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
 
         if a != 0 { Ok(-1) } else { Ok(0) }
     }
 
+    /// Almacena el word proporcionado por parametro.
+    /// Retorna 0.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir un  
+    /// word con un nombre invalido.
+    /// 
     pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
         if word_name.parse::<i16>().is_ok() {
             return Err(Error::InvalidWord);
@@ -270,6 +529,15 @@ impl Forth {
         Ok(0)
     }
 
+    /// Busca el word-body de un word cuyo word-name coincida con el pasado por
+    /// parametro.
+    /// Retorna una referencia al Vec de definiciones del word-name.
+    ///
+    /// # Errors
+    /// 
+    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un 
+    /// word que no se encuentra definido.
+    ///
     pub fn get_word_body(&mut self, word_name: &String) -> Result<&Vec<String>, Error> {
         match self.words.get(word_name) {
             Some(word_body) => Ok(word_body),
@@ -277,17 +545,47 @@ impl Forth {
         }
     }
 
-    pub fn get_word_body_index(&mut self, word_name: &String) -> Result<usize, Error> {
+    /// Retorna el tamaño de la cantidad de words-body que fueron definidos
+    /// historicamente para el word-name pasado por parametro.
+    ///
+    /// # Errors
+    /// 
+    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un 
+    /// word que no se encuentra definido.
+    ///
+    pub fn get_word_body_len(&mut self, word_name: &String) -> Result<usize, Error> {
         let words_body = self.get_word_body(word_name)?;
 
         Ok(words_body.len() - 1)
     }
 
+    /// Retorna si existe definido un word con el nombre word-name.
+    ///
+    /// # Errors
+    ///
     pub fn word_exists(&mut self, word_name: &str) -> bool {
         let aux: Vec<&str> = word_name.splitn(2, '=').collect();
         self.get_word_body(&aux[0].to_string()).is_ok()
     }
 
+    /// Escribe en un archivo, que se encuentra en la ruta pasada por parametro,
+    /// el stack de ejecución restante.
+    /// Retorna 0.
+    ///
+    /// # Errors
+    /// 
+    /// Returns [`FileOpenError`](Error::FileOpenError) si se intenta abrir un 
+    /// y ocurre algun error.
+    /// 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// un elemento de un stack vacio.
+    ///
+    /// Returns [`StackError`](Error::StackError) si ocurre algún error cuando se
+    /// intenta acceder a un stack.
+    /// 
+    /// Returns [`FileWriteError`](Error::FileWriteError) si ocurre algún error de 
+    /// escritura en un archivo.
+    /// 
     pub fn write_stack(&mut self, path: &str) -> Result<i16, Error> {
         let mut file = open_file(path)?;
 
