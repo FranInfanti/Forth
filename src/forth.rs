@@ -66,7 +66,7 @@ impl Forth {
     ///
     /// # Errors
     ///
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// el ultimo elemento de un stack vacio.
     /// in the PE32 image.
     ///
@@ -77,7 +77,7 @@ impl Forth {
         }
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y los suma, 
+    /// Toma los dos ultimos elementos del stack de ejecución y los suma,
     /// añadiendo el resultado de la suma al stack de ejecución.
     /// Retorna el resultado de la suma.
     ///
@@ -85,8 +85,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn suma(&mut self) -> Result<i16, Error> {
@@ -97,16 +97,16 @@ impl Forth {
         Ok(a + b)
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y los resta, 
+    /// Toma los dos ultimos elementos del stack de ejecución y los resta,
     /// añadiendo el resultado de la resta al stack de ejecución.
     /// Retorna el resultado de la resta.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn resta(&mut self) -> Result<i16, Error> {
@@ -117,16 +117,16 @@ impl Forth {
         Ok(b - a)
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y hace el 
+    /// Toma los dos ultimos elementos del stack de ejecución y hace el
     /// producto entre ellos, añadiendo el resultado del producto al stack de ejecución.
     /// Retorna el resultado de la multiplicación.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn producto(&mut self) -> Result<i16, Error> {
@@ -137,7 +137,7 @@ impl Forth {
         Ok(a * b)
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y los divide, 
+    /// Toma los dos ultimos elementos del stack de ejecución y los divide,
     /// añadiendo el resultado de la división al stack de ejecución.
     /// Retorna el resultado de la división.
     ///
@@ -145,10 +145,10 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
-    /// 
+    ///
     /// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
     /// una división por cero.
     ///
@@ -173,8 +173,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn igual(&mut self) -> Result<i16, Error> {
@@ -192,7 +192,7 @@ impl Forth {
     }
 
     /// Toma los dos ultimos elementos del stack de ejecución y los compara
-    /// para determinar si el segundo elemento tomado es mayor al primero, 
+    /// para determinar si el segundo elemento tomado es mayor al primero,
     /// añade al stack de ejecución -1 si es verdadero y 0 en caso contrario.
     /// Retorna el resultado de la comparación.
     ///
@@ -200,8 +200,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn mayor(&mut self) -> Result<i16, Error> {
@@ -219,7 +219,7 @@ impl Forth {
     }
 
     /// Toma los dos ultimos elementos del stack de ejecución y los compara
-    /// para determinar si el segundo elemento tomado es menor al primero, 
+    /// para determinar si el segundo elemento tomado es menor al primero,
     /// añade al stack de ejecución -1 si es verdadero y 0 en caso contrario.
     /// Retorna el resultado de la comparación.
     ///
@@ -227,8 +227,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn menor(&mut self) -> Result<i16, Error> {
@@ -245,8 +245,8 @@ impl Forth {
         Ok(value)
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y aplica la 
-    /// operación "and", considerando que todo elemento distinto de cero es 
+    /// Toma los dos ultimos elementos del stack de ejecución y aplica la
+    /// operación "and", considerando que todo elemento distinto de cero es
     /// verdadero o -1 y todo elemento igual a cero es falso o 0.
     /// Retorna el resultado de la operación.
     ///
@@ -254,8 +254,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn and(&mut self) -> Result<i16, Error> {
@@ -271,8 +271,8 @@ impl Forth {
         Ok(value)
     }
 
-    /// Toma los dos ultimos elementos del stack de ejecución y aplica la 
-    /// operación "or", considerando que todo elemento distinto de cero es 
+    /// Toma los dos ultimos elementos del stack de ejecución y aplica la
+    /// operación "or", considerando que todo elemento distinto de cero es
     /// verdadero o -1 y todo elemento igual a cero es falso o 0.
     /// Retorna el resultado de la operación.
     ///
@@ -280,8 +280,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn or(&mut self) -> Result<i16, Error> {
@@ -297,8 +297,8 @@ impl Forth {
         Ok(value)
     }
 
-    /// Toma el ultimo elemento del stack de ejecución y aplica la 
-    /// operación "not", considerando que todo elemento distinto de cero es 
+    /// Toma el ultimo elemento del stack de ejecución y aplica la
+    /// operación "not", considerando que todo elemento distinto de cero es
     /// verdadero o -1 y todo elemento igual a cero es falso o 0.
     /// Retorna el resultado de la operación.
     ///
@@ -306,8 +306,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn not(&mut self) -> Result<i16, Error> {
@@ -322,7 +322,7 @@ impl Forth {
         Ok(value)
     }
 
-    /// Toma el ultimo elemento del stack y lo duplica, insertando tambien la 
+    /// Toma el ultimo elemento del stack y lo duplica, insertando tambien la
     /// copia en el stack de ejecución.
     /// Retorna el valor del elemento duplicado.
     ///
@@ -330,8 +330,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn dup(&mut self) -> Result<i16, Error> {
@@ -346,13 +346,13 @@ impl Forth {
 
     /// Toma y descarta el ultimo elemento del stack de ejecución.
     /// Retorna el valor del elemento descartado.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn drop(&mut self) -> Result<i16, Error> {
@@ -367,8 +367,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn swap(&mut self) -> Result<i16, Error> {
@@ -380,7 +380,7 @@ impl Forth {
     }
 
     /// Toma el segundo elemento del stack y lo dupica, insertando dicha copia
-    /// en el ultimo lugar del stack. Todos los demas elementos conservan su 
+    /// en el ultimo lugar del stack. Todos los demas elementos conservan su
     /// posición actual.
     /// Retorna el valor del elemento que quedo en el tope del stack.
     ///
@@ -388,8 +388,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn over(&mut self) -> Result<i16, Error> {
@@ -410,8 +410,8 @@ impl Forth {
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn rot(&mut self) -> Result<i16, Error> {
@@ -426,13 +426,13 @@ impl Forth {
 
     /// Imprime por stdout el ultimo elemento del stack, consumiendo su valor.
     /// Retorna el elemento mostrado por el stdout.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn print_stack(&mut self) -> Result<i16, Error> {
@@ -442,18 +442,18 @@ impl Forth {
     }
 
     /// Imprime por stdout el ultimo elemento del stack, consumiendo su
-    /// valor, pero en formato char. 
+    /// valor, pero en formato char.
     /// Retorna el valor del elemento mostrado por stdout en i16.
     ///
     /// # Errors
     ///
     /// Returns [`StackOverflow`](Error::StackOverflow) si se intenta añadir
     /// un elemento a un stack completo.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
-    /// 
-    /// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar 
+    ///
+    /// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     pub fn emit(&mut self) -> Result<i16, Error> {
@@ -486,12 +486,12 @@ impl Forth {
 
     /// Toma el ultimo elemento del stack y verifica si es verdadero o falso.
     /// Retorna el resultado del if.
-    /// 
+    ///
     /// # Errors
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
-    /// 
+    ///
     pub fn if_statement(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
 
@@ -500,12 +500,12 @@ impl Forth {
 
     /// Almacena el word proporcionado por parametro.
     /// Retorna 0.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir un  
     /// word con un nombre invalido.
-    /// 
+    ///
     pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
         if word_name.parse::<i16>().is_ok() {
             return Err(Error::InvalidWord);
@@ -534,8 +534,8 @@ impl Forth {
     /// Retorna una referencia al Vec de definiciones del word-name.
     ///
     /// # Errors
-    /// 
-    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un 
+    ///
+    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
     /// word que no se encuentra definido.
     ///
     pub fn get_word_body(&mut self, word_name: &String) -> Result<&Vec<String>, Error> {
@@ -549,8 +549,8 @@ impl Forth {
     /// historicamente para el word-name pasado por parametro.
     ///
     /// # Errors
-    /// 
-    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un 
+    ///
+    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
     /// word que no se encuentra definido.
     ///
     pub fn get_word_body_len(&mut self, word_name: &String) -> Result<usize, Error> {
@@ -573,19 +573,19 @@ impl Forth {
     /// Retorna 0.
     ///
     /// # Errors
-    /// 
-    /// Returns [`FileOpenError`](Error::FileOpenError) si se intenta abrir un 
+    ///
+    /// Returns [`FileOpenError`](Error::FileOpenError) si se intenta abrir un
     /// y ocurre algun error.
-    /// 
-    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar 
+    ///
+    /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
     /// Returns [`StackError`](Error::StackError) si ocurre algún error cuando se
     /// intenta acceder a un stack.
-    /// 
-    /// Returns [`FileWriteError`](Error::FileWriteError) si ocurre algún error de 
+    ///
+    /// Returns [`FileWriteError`](Error::FileWriteError) si ocurre algún error de
     /// escritura en un archivo.
-    /// 
+    ///
     pub fn write_stack(&mut self, path: &str) -> Result<i16, Error> {
         let mut file = open_file(path)?;
 
