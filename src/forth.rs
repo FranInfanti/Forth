@@ -68,7 +68,6 @@ impl Forth {
     ///
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// el ultimo elemento de un stack vacio.
-    /// in the PE32 image.
     ///
     pub fn pop(&mut self) -> Result<i16, Error> {
         match self.stack.pop() {

@@ -1,6 +1,6 @@
-use crate::consts::consts::*;
+use crate::r#const::consts::*;
 
-pub mod consts;
+pub mod r#const;
 pub mod error;
 pub mod forth;
 
@@ -28,6 +28,20 @@ fn split_string(chars: &[char], i: &mut usize) -> String {
     string.trim().to_string()
 }
 
+/// Realiza un split del buf recibido por parametro,
+/// acorde a las necesidades del programa.
+/// Retorna un vector de String que contiene la separación deseada.
+///
+/// # Errors
+///
+/// # Examples
+///
+/// ```
+///     let buf = "1 2 + IF .\" Hallo  Welt\" THEN"
+///     let cmd = split(buf);
+///     // cmd = ["1", "2", "+", "IF", "." Hallo  Welt"", "THEN"]
+/// ```
+///
 fn split(buf: &str) -> Vec<String> {
     let mut split = Vec::<String>::new();
     let chars: Vec<char> = buf.trim().chars().collect();
@@ -56,6 +70,25 @@ fn split(buf: &str) -> Vec<String> {
     split
 }
 
+/// Retorna el size del stack que deberia estar especificado en
+/// el argumento pasado por parametro.
+///
+/// # Errors
+///
+/// Returns [`InvalidArguments`](Error::InvalidArguments) si los argumentos
+/// recibidos son invalidos.
+///
+/// Returns [`ParsingError`](Error::ParsingError) si el size del stack no es
+/// númerico.
+///
+/// # Examples
+///
+/// ```
+///     let env = "stack-size=120";
+///     let stack_size = get_stack_size(env);
+///     // stack_size = 120;
+/// ```
+///
 fn get_stack_size(env: &str) -> Result<usize, Error> {
     let chars: Vec<&str> = env.splitn(2, '=').collect();
 
@@ -69,6 +102,23 @@ fn get_stack_size(env: &str) -> Result<usize, Error> {
     }
 }
 
+/// Retorna el path del archivo a interpretar y el size del stack.
+/// En caso de no especificar este ultimo, se considera un size de 128 Kb.
+///
+/// # Errors
+///
+/// Returns [`InvalidAmountOfArguments`](Error::InvalidAmountOfArguments) si se envia
+/// una cantidad invalida de parametros.
+///
+/// # Examples
+///
+/// ```
+///     let mut env = vec!["data/suma.fth", "stack-size=10"];
+///     let (size, path) = parse_cmd_arguments(&mut env);
+///     // size = 10;
+///     // path = "data/suma.fth";
+/// ```
+///
 fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error> {
     env.remove(0);
 
@@ -84,10 +134,36 @@ fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error>
     Ok((stack_size, &env[0]))
 }
 
+/// Retorna si la definición del word esta completa en buf.
+///
+/// # Errors
+///
+/// # Examples
+///
+/// ```
+/// let bool = word_not_complete(": MAX OVER ");
+/// // bool = false;
+/// ```
+///
 fn word_not_complete(buf: &str) -> bool {
     buf.contains(START_WORD) && !buf.contains(END_WORD)
 }
 
+/// Realiza un parsing de la definición de un word.
+/// Retorna un String que contiene el parseo deseado.
+///
+/// # Errors
+///
+/// # Examples
+///
+/// ```
+///     let cmds = vec![":", "MAX", "OVER", "OVER", ";"]
+///     let mut i = 0;
+///     let word = parse_word(&cmds, &mut i);
+///     // word = ": MAX OVER OVER ;";
+///     // i = 4;
+/// ```
+///
 fn parse_word(cmds: &[String], i: &mut usize) -> String {
     let mut word = String::new();
 
@@ -104,6 +180,19 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
     word.to_lowercase().trim().to_string()
 }
 
+/// Parsea un String a un formato conveniente.
+/// Retorna un vector de String que contiene el formato deseado.
+///
+/// # Errors
+///
+/// # Examples
+///
+/// ```
+///     let buf = "1 2 + IF : MAX OVER ; ELSE .\" Nein   \" THEN";
+///     let args = parse_line(buf);
+///     // args = ["1", "2", "+", "IF", ": MAX OVER ;", "ELSE", ." Nein   ", "THEN"];
+/// ```
+///
 fn parse_line(buf: &str) -> Vec<String> {
     let cmds = split(buf.trim());
     let mut args = Vec::<String>::new();
@@ -122,6 +211,15 @@ fn parse_line(buf: &str) -> Vec<String> {
     args
 }
 
+/// Realiza la expansión, en caso de que se referencie a otro word-name,
+/// del word-body añadiendo un indice al lado del word-name encontrado.
+/// Retorna el word-body expandido.
+///
+/// # Errors
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
+/// un word que no se encuentra definido.
+///
 fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
     let words = split(word_body);
 
@@ -139,6 +237,14 @@ fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error>
     Ok(final_word_body.trim().to_string())
 }
 
+/// Define el word pasado por parametro.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
+/// un word que no se encuentra definido.
+///
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     let string = buf.trim_matches([START_WORD, END_WORD]).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
@@ -149,6 +255,15 @@ fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     forth.define_word(word_name, word_body)
 }
 
+/// Obtiene el word-body especifico del word-name y
+/// lo añade para que sea ejecutado.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
+/// un word que no se encuentra definido.
+///
 fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let words_body: &Vec<String>;
     let index: usize;
@@ -197,7 +312,6 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     }
 
     anidados = 0;
-
     if args[i].eq(ELSE) {
         args.remove(i);
     }
@@ -239,6 +353,26 @@ fn is_numeric(buf: &str) -> (i16, bool) {
     }
 }
 
+/// Realiza el matching según las operaciones nativas del interprete.
+/// Una vez que realiza el match ejecuta la operación.
+///
+/// # Errors
+///
+/// Returns [`StackOverflow`](Error::StackOverflow) si se sobrepasa
+/// el tamaño del stack.
+///
+/// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
+/// una división por cero.
+///
+/// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
+/// word que no se encuentra definido.
+///
 fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     match buf {
         SUMA => forth.suma(),
@@ -263,6 +397,30 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     }
 }
 
+/// Se encarga de, dada una linea, delegar a distintas funciones
+/// según que operación se debe ejecutar.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`StackOverflow`](Error::StackOverflow) si se sobrepasa
+/// el tamaño del stack.
+///
+/// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
+/// una división por cero.
+///
+/// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir un  
+/// word con un nombre invalido.
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
+/// word que no se encuentra definido.
+///
 fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
     while i < args.len() {
@@ -290,6 +448,36 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     Ok(0)
 }
 
+/// Se encarga de abrir el archivo a interpretar y leerlo linea por linea.
+/// Delegando la ejecución de cada linea a otra función.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`StackOverflow`](Error::StackOverflow) si se sobrepasa
+/// el tamaño del stack.
+///
+/// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
+/// una división por cero.
+///
+/// Returns [`ParsingError`](Error::ParsingError) si se intenta tomar
+/// un elemento de un stack vacio.
+///
+/// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir un  
+/// word con un nombre invalido.
+///
+/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
+/// word que no se encuentra definido.
+///
+/// Returns [`FileOpenError`](Error::FileOpenError) si se intenta abrir un
+/// y ocurre algun error.
+///
+/// Returns [`FileReadError`](Error::FileReadError) si se lee un archivo
+/// y ocurre algun error.
+///
 fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
     let file = match File::open(path) {
         Ok(file) => file,

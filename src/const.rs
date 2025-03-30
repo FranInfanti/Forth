@@ -1,4 +1,4 @@
-/// Definición de constantes que se utilizaran a 
+/// Definición de constantes que se utilizaran a
 /// lo largo del programa.
 pub mod consts {
     pub const FILE: &str = "stack.fth";
@@ -27,7 +27,7 @@ pub mod consts {
     pub const IGUAL: &str = "=";
     pub const MAYOR: &str = ">";
     pub const MENOR: &str = "<";
-    
+
     pub const START_WORD: char = ':';
     pub const END_WORD: char = ';';
 }
