@@ -437,7 +437,7 @@ impl Forth {
     ///
     pub fn print_stack(&mut self) -> Result<i16, Error> {
         let top = self.pop()?;
-        print!("{} ", top);
+        print!("{top} ");
         Ok(top)
     }
 
@@ -459,7 +459,7 @@ impl Forth {
     pub fn emit(&mut self) -> Result<i16, Error> {
         let number = self.pop()?;
         match char::from_u32(number as u32) {
-            Some(char) => print!("{} ", char),
+            Some(char) => print!("{char} "),
             None => return Err(Error::ParsingError),
         };
 
@@ -481,7 +481,7 @@ impl Forth {
     /// # Errors
     ///
     pub fn print_string(&self, string: String) {
-        print!("{} ", string);
+        print!("{string} ");
     }
 
     /// Toma el ultimo elemento del stack y verifica si es verdadero o falso.
