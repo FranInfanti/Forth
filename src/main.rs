@@ -299,10 +299,10 @@ fn is_numeric(buf: &str) -> (i16, bool) {
 ///
 fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     match buf {
-        SUMA => forth.suma(),
-        RESTA => forth.resta(),
-        PRODUCTO => forth.producto(),
-        DIVISION => forth.division(),
+        ADD => forth.add(),
+        SUB => forth.sub(),
+        MUL => forth.mul(),
+        DIV => forth.div(),
         DUP => forth.dup(),
         DROP => forth.drop(),
         SWAP => forth.swap(),
@@ -311,9 +311,9 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         PRINT_STACK => forth.print_stack(),
         EMIT => forth.emit(),
         CR => forth.cr(),
-        IGUAL => forth.igual(),
-        MENOR => forth.menor(),
-        MAYOR => forth.mayor(),
+        EQUAL => forth.equal(),
+        LOWER => forth.lower(),
+        GREATER => forth.greater(),
         AND => forth.and(),
         OR => forth.or(),
         NOT => forth.not(),

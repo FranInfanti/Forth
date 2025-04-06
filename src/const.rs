@@ -20,13 +20,13 @@ pub mod consts {
     pub const SWAP: &str = "swap";
     pub const START_STRING: &str = ".\"";
     pub const PRINT_STACK: &str = ".";
-    pub const SUMA: &str = "+";
-    pub const RESTA: &str = "-";
-    pub const PRODUCTO: &str = "*";
-    pub const DIVISION: &str = "/";
-    pub const IGUAL: &str = "=";
-    pub const MAYOR: &str = ">";
-    pub const MENOR: &str = "<";
+    pub const ADD: &str = "+";
+    pub const SUB: &str = "-";
+    pub const MUL: &str = "*";
+    pub const DIV: &str = "/";
+    pub const EQUAL: &str = "=";
+    pub const GREATER: &str = ">";
+    pub const LOWER: &str = "<";
 
     pub const START_WORD: char = ':';
     pub const END_WORD: char = ';';

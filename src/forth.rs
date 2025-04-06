@@ -89,7 +89,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn suma(&mut self) -> Result<i16, Error> {
+    pub fn add(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -109,7 +109,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn resta(&mut self) -> Result<i16, Error> {
+    pub fn sub(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -129,7 +129,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn producto(&mut self) -> Result<i16, Error> {
+    pub fn mul(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -152,7 +152,7 @@ impl Forth {
     /// Returns [`DivisionByZero`](Error::DivisionByZero) si se intenta realizar
     /// una división por cero.
     ///
-    pub fn division(&mut self) -> Result<i16, Error> {
+    pub fn div(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -177,7 +177,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn igual(&mut self) -> Result<i16, Error> {
+    pub fn equal(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -204,7 +204,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn mayor(&mut self) -> Result<i16, Error> {
+    pub fn greater(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -231,7 +231,7 @@ impl Forth {
     /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
     /// un elemento de un stack vacio.
     ///
-    pub fn menor(&mut self) -> Result<i16, Error> {
+    pub fn lower(&mut self) -> Result<i16, Error> {
         let a = self.pop()?;
         let b = self.pop()?;
 
@@ -637,7 +637,7 @@ mod test {
     }
 
     #[test]
-    pub fn suma_test() {
+    pub fn add_test() {
         let mut forth = Forth::new(128);
         let a = 10;
         let b = 5;
@@ -645,7 +645,7 @@ mod test {
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        let _ = forth.suma();
+        let _ = forth.add();
 
         match forth.pop() {
             Ok(result) => assert_eq!(result, a + b),
@@ -654,7 +654,7 @@ mod test {
     }
 
     #[test]
-    pub fn resta_test() {
+    pub fn sub_test() {
         let mut forth = Forth::new(128);
         let a = 5;
         let b = 10;
@@ -663,7 +663,7 @@ mod test {
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        let _ = forth.resta();
+        let _ = forth.sub();
 
         match forth.pop() {
             Ok(result) => assert_eq!(result, a - b),
@@ -672,7 +672,7 @@ mod test {
     }
 
     #[test]
-    pub fn producto_test() {
+    pub fn mul_test() {
         let mut forth = Forth::new(128);
         let a = 10;
         let b = 5;
@@ -680,7 +680,7 @@ mod test {
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        let _ = forth.producto();
+        let _ = forth.mul();
 
         match forth.pop() {
             Ok(result) => assert_eq!(result, a * b),
@@ -689,7 +689,7 @@ mod test {
     }
 
     #[test]
-    pub fn division_test() {
+    pub fn div_test() {
         let mut forth = Forth::new(128);
         let a = 10;
         let b = 5;
@@ -697,7 +697,7 @@ mod test {
         let _ = forth.push(a);
         let _ = forth.push(b);
 
-        let _ = forth.division();
+        let _ = forth.div();
 
         match forth.pop() {
             Ok(result) => assert_eq!(result, a / b),
@@ -706,7 +706,7 @@ mod test {
     }
 
     #[test]
-    pub fn igual_test() {
+    pub fn equal_test() {
         let mut forth = Forth::new(128);
         let a = 1;
         let b = 1;
@@ -715,14 +715,14 @@ mod test {
         let _ = forth.push(b);
 
         // a == b ?
-        match forth.igual() {
+        match forth.equal() {
             Ok(result) => assert_eq!(result, -1),
             Err(_) => (),
         }
     }
 
     #[test]
-    pub fn mayor_test() {
+    pub fn greater_test() {
         let mut forth = Forth::new(128);
         let a = 3;
         let b = 4;
@@ -731,14 +731,14 @@ mod test {
         let _ = forth.push(b);
 
         // 3 4 > => 3 > 4
-        match forth.mayor() {
+        match forth.greater() {
             Ok(result) => assert_eq!(result, 0),
             Err(_) => (),
         }
     }
 
     #[test]
-    pub fn menor_test() {
+    pub fn lower_test() {
         let mut forth = Forth::new(128);
         let a = 3;
         let b = 4;
@@ -747,7 +747,7 @@ mod test {
         let _ = forth.push(b);
 
         // 3 4 < => 3 < 4
-        match forth.menor() {
+        match forth.lower() {
             Ok(result) => assert_eq!(result, -1),
             Err(_) => (),
         }
