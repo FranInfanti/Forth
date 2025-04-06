@@ -1,8 +1,10 @@
 use crate::r#const::consts::*;
+use crate::utils::split::split;
 
 pub mod r#const;
 pub mod error;
 pub mod forth;
+pub mod utils;
 
 use error::Error;
 use forth::Forth;
@@ -11,64 +13,6 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
 };
-
-fn split_string(chars: &[char], i: &mut usize) -> String {
-    let mut string = String::from(START_STRING);
-
-    *i += 2;
-    loop {
-        string = format!("{}{}", string, chars[*i]);
-        if chars[*i] == '"' {
-            break;
-        }
-        *i += 1;
-    }
-    *i += 1;
-
-    string.trim().to_string()
-}
-
-/// Realiza un split del buf recibido por parametro,
-/// acorde a las necesidades del programa.
-/// Retorna un vector de String que contiene la separación deseada.
-///
-/// # Errors
-///
-/// # Examples
-///
-/// ```
-///     let buf = "1 2 + IF .\" Hallo  Welt\" THEN"
-///     let cmd = split(buf);
-///     // cmd = ["1", "2", "+", "IF", "." Hallo  Welt"", "THEN"]
-/// ```
-///
-fn split(buf: &str) -> Vec<String> {
-    let mut split = Vec::<String>::new();
-    let chars: Vec<char> = buf.trim().chars().collect();
-
-    let mut i = 0;
-    while i < chars.len() {
-        let mut string = String::new();
-        while i < chars.len() && chars[i] != ' ' {
-            if i + 1 < chars.len() && chars[i] == '.' && chars[i + 1] == '"' {
-                split.push(split_string(&chars, &mut i));
-                break;
-            }
-
-            string = format!("{}{}", string, chars[i].to_lowercase());
-            i += 1;
-        }
-
-        if !string.is_empty() {
-            split.push(string.trim().to_string());
-        }
-
-        while i < chars.len() && chars[i] == ' ' {
-            i += 1;
-        }
-    }
-    split
-}
 
 /// Retorna el size del stack que deberia estar especificado en
 /// el argumento pasado por parametro.
@@ -211,105 +155,20 @@ fn parse_line(buf: &str) -> Vec<String> {
     args
 }
 
-/// Realiza la expansión, en caso de que se referencie a otro word-name,
-/// del word-body añadiendo un indice al lado del word-name encontrado.
-/// Retorna el word-body expandido.
-///
-/// # Errors
-///
-/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
-/// un word que no se encuentra definido.
-///
-/// # Example
-///
-/// ```
-///     // : foo 1 ;
-///     // : foo 2 ;
-///     let buf = ": bar foo 3 + ;"
-///     define_word(forth, buf);
-///     // word-name = "bar";
-///     // word-body = "foo=1 3 +";
-/// ```
-///
-fn expand_word_body(forth: &mut Forth, word_body: &str) -> Result<String, Error> {
-    let words = split(word_body);
-
-    let mut final_word_body = String::new();
-
-    for word in words {
-        let mut w = word.to_string();
-        if forth.word_exists(&w) {
-            let index = forth.get_word_body_len(&w)?;
-            w = format!("{}={}", w, index);
-        }
-        final_word_body = format!("{} {}", final_word_body, w);
-    }
-
-    Ok(final_word_body.trim().to_string())
-}
-
-/// Define el word pasado por parametro.
-/// Retorna 0.
-///
-/// # Errors
-///
-/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
-/// un word que no se encuentra definido.
-///
-/// # Example
-///
-/// ```
-///     let buf = ": bar dup 3 + ;"
-///     define_word(forth, buf);
-///     // word-name = "bar";
-///     // word-body = "dup 3 +";
-/// ```
-///
 fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     let string = buf.trim_matches([START_WORD, END_WORD]).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
 
     let word_name = args[0].to_string();
-    let word_body = expand_word_body(forth, args[1])?;
+    let word_body = args[1].to_string();
 
     forth.define_word(word_name, word_body)
 }
 
-/// Obtiene el word-body especifico del word-name y
-/// lo añade para que sea ejecutado.
-/// Retorna 0.
-///
-/// # Errors
-///
-/// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a
-/// un word que no se encuentra definido.
-///
-/// # Example
-///
-/// ```
-///     // : foo 1;
-///     // : bar foo ;
-///     let mut args = vec!["bar=0"];
-///     get_word_body(forth, &mut args, 0);
-///     // args = ["bar=0", "1"]
-/// ```
-///
-fn get_word_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
-    let words_body: &Vec<String>;
-    let index: usize;
+fn get_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+    let body = forth.get_word_body(&args[i])?;
 
-    if args[i].contains('=') {
-        let aux: Vec<String> = args[i].splitn(2, '=').map(|s| s.to_string()).collect();
-        words_body = forth.get_word_body(&aux[0])?;
-
-        let (n, _) = is_numeric(aux[1].trim_matches('='));
-        index = n as usize;
-    } else {
-        words_body = forth.get_word_body(&args[i])?;
-        index = words_body.len() - 1;
-    }
-
-    let word_body = split(&words_body[index]);
+    let word_body = body;
     for word in word_body {
         args.insert(i + 1, word.to_string());
         i += 1;
@@ -491,8 +350,8 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     while i < args.len() {
         if args[i].contains(START_WORD) {
             define_word(forth, &args[i])?;
-        } else if forth.word_exists(&args[i]) {
-            get_word_body(forth, &mut args, i)?;
+        } else if forth.word_exists(&args[i]) {        
+            get_body(forth, &mut args, i)?;
         } else if args[i].eq(IF) {
             if_statement(forth, &mut args, i)?;
             continue;

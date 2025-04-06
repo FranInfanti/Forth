@@ -1,8 +1,7 @@
-use crate::error;
+use crate::{error, split};
 
 use error::Error;
 use std::{
-    collections::HashMap,
     fs::{self, File},
     io::Write,
 };
@@ -14,8 +13,8 @@ pub struct Forth {
     stack: Vec<i16>,
     /// Tamaño del stack de ejecución, en Bytes.
     stack_size: usize,
-    /// Definición de words, word-name es la clave y word-body el value.
-    words: HashMap<String, Vec<String>>,
+    /// Representa las words definidas en el sistema.
+    words: Vec<(String, String)>,
 }
 
 fn open_file(path: &str) -> Result<File, Error> {
@@ -41,7 +40,7 @@ impl Forth {
         Forth {
             stack: Vec::<i16>::new(),
             stack_size: size,
-            words: HashMap::<String, Vec<String>>::new(),
+            words: Vec::new(),
         }
     }
 
@@ -499,74 +498,71 @@ impl Forth {
         if a != 0 { Ok(-1) } else { Ok(0) }
     }
 
-    /// Almacena el word proporcionado por parametro.
-    /// Retorna 0.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir un  
-    /// word con un nombre invalido.
-    ///
     pub fn define_word(&mut self, word_name: String, word_body: String) -> Result<i16, Error> {
         if word_name.parse::<i16>().is_ok() {
             return Err(Error::InvalidWord);
         }
 
-        match self.get_word_body(&word_name) {
-            Ok(words_body) => {
-                let mut vec = Vec::<String>::new();
-                for words in words_body {
-                    vec.push(words.to_string());
-                }
+        self.words.insert(0, (word_name, word_body));
 
-                vec.push(word_body);
-                self.words.insert(word_name, vec);
-            }
-            Err(_) => {
-                let vec = vec![word_body];
-                self.words.insert(word_name, vec);
-            }
-        };
         Ok(0)
     }
 
-    /// Busca el word-body de un word cuyo word-name coincida con el pasado por
-    /// parametro.
-    /// Retorna una referencia al Vec de definiciones del word-name.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
-    /// word que no se encuentra definido.
-    ///
-    pub fn get_word_body(&mut self, word_name: &String) -> Result<&Vec<String>, Error> {
-        match self.words.get(word_name) {
-            Some(word_body) => Ok(word_body),
-            None => Err(Error::MissingWord),
+    fn expand_body(&self, mut word_body: Vec<String>, index: usize) -> Result<Vec<String>, Error> {
+        let mut j = 0;
+        while j < word_body.len() {
+            if !self.word_exists(&word_body[j]) {
+                j += 1;
+                continue;
+            }
+
+            let mut i = index;
+            while i < self.words.len() {
+                let (name, new_body) = &self.words[i];
+                if name.eq(&word_body[j]) {
+                    word_body.remove(j);
+                    for body in split(new_body) {
+                        word_body.insert(j, body);
+                        j += 1;
+                    }
+                    break;
+                }
+                i += 1;
+            }
+
+            j += 1;
         }
+        Ok(word_body)
     }
 
-    /// Retorna el tamaño de la cantidad de words-body que fueron definidos
-    /// historicamente para el word-name pasado por parametro.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
-    /// word que no se encuentra definido.
-    ///
-    pub fn get_word_body_len(&mut self, word_name: &String) -> Result<usize, Error> {
-        let words_body = self.get_word_body(word_name)?;
+    pub fn get_word_body(&mut self, word_name: &String) -> Result<Vec<String>, Error> {
+        let mut i = 0;
+        while i < self.words.len() {
+            let (name, body) = &self.words[i];
+            if name.eq(word_name) {
+                return self.expand_body(split(body), i + 1);
+            }
 
-        Ok(words_body.len() - 1)
+            i += 1;
+        }
+        Err(Error::MissingWord)
     }
 
     /// Retorna si existe definido un word con el nombre word-name.
     ///
     /// # Errors
     ///
-    pub fn word_exists(&mut self, word_name: &str) -> bool {
-        let aux: Vec<&str> = word_name.splitn(2, '=').collect();
-        self.get_word_body(&aux[0].to_string()).is_ok()
+    pub fn word_exists(&self, word_name: &str) -> bool {
+        let mut i = 0;
+        while i < self.words.len() {
+            let (name, _) = &self.words[i];
+            if name.eq(word_name) {
+                return true;
+            }
+
+            i += 1;
+        }
+        false
     }
 
     /// Escribe en un archivo, que se encuentra en la ruta pasada por parametro,
