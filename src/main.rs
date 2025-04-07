@@ -14,8 +14,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-/// Retorna el size del stack que deberia estar especificado en
-/// el argumento pasado por parametro.
+/// Retorna el stack_size
 ///
 /// # Errors
 ///
@@ -24,14 +23,6 @@ use std::{
 ///
 /// Returns [`ParsingError`](Error::ParsingError) si el size del stack no es
 /// númerico.
-///
-/// # Examples
-///
-/// ```
-///     let env = "stack-size=120";
-///     let stack_size = get_stack_size(env);
-///     // stack_size = 120;
-/// ```
 ///
 fn get_stack_size(env: &str) -> Result<usize, Error> {
     let chars: Vec<&str> = env.splitn(2, '=').collect();
@@ -46,8 +37,8 @@ fn get_stack_size(env: &str) -> Result<usize, Error> {
     }
 }
 
-/// Retorna el path del archivo a interpretar y el size del stack.
-/// En caso de no especificar este ultimo, se considera un size de 128 Kb.
+/// Retorna el path del archivo a interpretar y el stack size.
+/// En caso de no especificar un stack size, se considera 128 Kb.
 ///
 /// # Errors
 ///
@@ -78,16 +69,9 @@ fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error>
     Ok((stack_size, &env[0]))
 }
 
-/// Retorna si la definición del word esta completa en buf.
+/// Retorna si la definición del word comienza y finaliza en buf.
 ///
 /// # Errors
-///
-/// # Examples
-///
-/// ```
-/// let bool = word_not_complete(": MAX OVER ");
-/// // bool = false;
-/// ```
 ///
 fn word_not_complete(buf: &str) -> bool {
     buf.contains(START_WORD) && !buf.contains(END_WORD)
@@ -125,7 +109,7 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
 }
 
 /// Parsea un String a un formato conveniente.
-/// Retorna un vector de String que contiene el formato deseado.
+/// Retorna un `Vec<String>` con el formato deseado.
 ///
 /// # Errors
 ///
@@ -140,8 +124,8 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
 fn parse_line(buf: &str) -> Vec<String> {
     let cmds = split(buf.trim());
     let mut args = Vec::<String>::new();
-    let mut i = 0;
 
+    let mut i = 0;
     while i < cmds.len() {
         if cmds[i].contains(START_WORD) {
             args.push(parse_word(&cmds, &mut i));
@@ -155,8 +139,24 @@ fn parse_line(buf: &str) -> Vec<String> {
     args
 }
 
-fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
-    let string = buf.trim_matches([START_WORD, END_WORD]).trim_ascii();
+/// Retorna si los siguientes args forman parte de un word.
+///
+/// # Errors
+///
+fn is_word(arg: &str) -> bool {
+    arg.contains(START_WORD)
+}
+
+/// Define un word en el interprete.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`InvalidWord`](Error::InvalidWord) si se intenta definir
+/// un word cuyo word-name es invalido.
+///
+fn define_word(forth: &mut Forth, word: &str) -> Result<i16, Error> {
+    let string = word.trim_matches([START_WORD, END_WORD]).trim_ascii();
     let args: Vec<&str> = string.splitn(2, ' ').collect();
 
     let word_name = args[0].to_string();
@@ -165,15 +165,39 @@ fn define_word(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     forth.define_word(word_name, word_body)
 }
 
-fn get_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
-    let body = forth.get_word_body(&args[i])?;
+/// Retorna si ya existe un word definido con nombre word_name.
+///
+/// # Errors
+///
+fn is_word_defined(forth: &Forth, word_name: &str) -> bool {
+    forth.word_exists(word_name)
+}
 
-    let word_body = body;
-    for word in word_body {
-        args.insert(i + 1, word.to_string());
+/// Añade a los argumentos a ejecutar el word-body de la word que
+/// se encontro.
+/// Retorna 0.
+///
+/// # Errors
+///
+/// Returns [`MissingWord`](Error::MissingWord) si no existe un word cuyo
+/// nombre sea igual al encontrado.
+///
+fn get_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+    let word_body = forth.get_word_body(&args[i])?;
+
+    for operation in word_body {
+        args.insert(i + 1, operation.to_string());
         i += 1;
     }
     Ok(0)
+}
+
+/// Retorna si se esta por ejecutar una operación condicional.
+///
+/// # Errors
+///
+fn is_if_statment(arg: &String) -> bool {
+    arg.eq(IF)
 }
 
 fn count_anidados(buf: &str) -> i16 {
@@ -186,8 +210,8 @@ fn count_anidados(buf: &str) -> i16 {
     }
 }
 
-/// Se encarga de procesar la condición del if, haciendo la evaluación y
-/// determinando que rama tomar.
+/// Ejecuta, según el resultado del if, el bloque de codigo del if o
+/// el else, si existe un else.
 /// Retorna 0.
 ///
 /// # Errors
@@ -195,13 +219,6 @@ fn count_anidados(buf: &str) -> i16 {
 /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
 /// un elemento de un stack vacio.
 ///
-/// # Example
-///
-/// ```
-///     let mut args = vec!["0", "-1", "+", "IF", "1", "+", "ELSE", "0", "/", "THEN"];
-///     if_statement(forth, &mut args, 3);
-///     // args = ["0", "-1", "+", "1", "+"];
-/// ```
 fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let result = forth.if_statement()?;
     args.remove(i);
@@ -234,22 +251,24 @@ fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Resu
     Ok(0)
 }
 
-/// Extrae del formato de strings, el String a mostrar por stdout.
+/// Retorna si se esta por definir un string para mostrar
+/// por stdout.
 ///
 /// # Errors
 ///
-/// # Example
+fn is_string(arg: &str) -> bool {
+    arg.contains(START_STRING)
+}
+
+/// Extrae y muestra el string por stdout.
 ///
-/// ```
-///     let str = ".\" Hola Mundo\"";
-///     print_string(forth, str);
-///     // stdout = Hola Mundo
-/// ```
+/// # Errors
+///
 fn print_string(forth: &mut Forth, string: &str) {
     let chars: Vec<char> = string.chars().collect();
     let mut string = String::new();
 
-    let mut i = 3; // ignora ' ." (space) '
+    let mut i = 3; // ignora ' ." (space)'
     while i < chars.len() {
         if chars[i] == '"' {
             break;
@@ -262,23 +281,35 @@ fn print_string(forth: &mut Forth, string: &str) {
     forth.print_string(string.to_string());
 }
 
-/// Intenta parsear un &str a un i16.
-/// Retorna, en caso de exito, el valor parseado y un booleano
-/// con valor true que indica el exito de la operación.
-/// Retorna, en caso de error, 0 y un booleano con valor false
-/// indicando que no se pudo
+/// Retorna si el buf puede ser parseado a i16.
 ///
 /// # Errors
 ///
-fn is_numeric(buf: &str) -> (i16, bool) {
-    match buf.parse::<i16>() {
-        Ok(n) => (n, true),
-        Err(_) => (0, false),
-    }
+fn is_numeric(buf: &str) -> bool {
+    buf.parse::<i16>().is_ok()
 }
 
-/// Realiza el matching según las operaciones nativas del interprete.
-/// Una vez que realiza el match ejecuta la operación.
+/// Pushea al stack del interprete un arg númerico.
+/// Retorna el value pusheado.
+///
+/// # Errors
+///
+/// Returns [`ParsingError`](Error::ParsingError) si ocurre algun error
+/// de parseo.
+///
+/// Returns [`StackOverflow`](Error::StackOverflow) si se intenta pushear
+/// un elemento a un stack completo.
+///  
+fn push_value(forth: &mut Forth, arg: &str) -> Result<i16, Error> {
+    let value = match arg.parse::<i16>() {
+        Ok(value) => value,
+        Err(_) => return Err(Error::ParsingError),
+    };
+    forth.push(value)
+}
+
+/// Ejecuta las operaciones nativas del interprete.
+/// Retorna lo que retorne el resultado de ejecutar la operación.
 ///
 /// # Errors
 ///
@@ -321,8 +352,7 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
     }
 }
 
-/// Se encarga de, dada una linea, delegar a distintas funciones
-/// según que operación se debe ejecutar.
+/// Ejecuta las operaciones de la linea que se leyo del archivo.
 /// Retorna 0.
 ///
 /// # Errors
@@ -348,22 +378,19 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
 fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
     while i < args.len() {
-        if args[i].contains(START_WORD) {
+        if is_word(&args[i]) {
             define_word(forth, &args[i])?;
-        } else if forth.word_exists(&args[i]) {        
+        } else if is_word_defined(forth, &args[i]) {
             get_body(forth, &mut args, i)?;
-        } else if args[i].eq(IF) {
+        } else if is_if_statment(&args[i]) {
             if_statement(forth, &mut args, i)?;
             continue;
-        } else if args[i].contains(START_STRING) {
+        } else if is_string(&args[i]) {
             print_string(forth, &args[i]);
+        } else if is_numeric(&args[i]) {
+            push_value(forth, &args[i])?;
         } else {
-            let (value, is_numeric) = is_numeric(&args[i]);
-            if is_numeric {
-                forth.push(value)?;
-            } else {
-                do_operation(forth, &args[i])?;
-            }
+            do_operation(forth, &args[i])?;
         }
 
         i += 1;
@@ -372,8 +399,7 @@ fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
     Ok(0)
 }
 
-/// Se encarga de abrir el archivo a interpretar y leerlo linea por linea.
-/// Delegando la ejecución de cada linea a otra función.
+/// Abre el archivo a interpretar y ejecuta linea por linea.
 /// Retorna 0.
 ///
 /// # Errors
@@ -443,11 +469,11 @@ pub fn main() {
 
     match run(path, &mut forth) {
         Ok(_) => {}
-        Err(error) => println!("{}", error),
+        Err(error) => println!("{error}"),
     }
 
     match forth.write_stack(FILE) {
         Ok(_) => {}
-        Err(error) => println!("{}", error),
+        Err(error) => println!("{error}"),
     }
 }

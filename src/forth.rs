@@ -502,7 +502,18 @@ impl Forth {
         Ok(0)
     }
 
-    fn expand_body(&self, mut word_body: Vec<String>, mut i: usize) -> Result<Vec<String>, Error> {
+    fn get_body_index_from(&self, word_name: &str, mut i: usize) -> usize {
+        while i < self.words.len() {
+            let (name, _) = &self.words[i];
+            if name.eq(word_name) {
+                break;
+            }
+            i += 1;
+        }
+        i
+    }
+
+    fn expand_body(&self, mut word_body: Vec<String>, i: usize) -> Result<Vec<String>, Error> {
         let mut j = 0;
         while j < word_body.len() {
             if !self.word_exists(&word_body[j]) {
@@ -510,23 +521,20 @@ impl Forth {
                 continue;
             }
 
-            if i > self.words.len() - 1 {
+            let found = self.get_body_index_from(&word_body[j], i);
+            if found == self.words.len() {
                 return Err(Error::MissingWord);
             }
 
-            while i < self.words.len() {
-                let (name, new_body) = &self.words[i];
-                if name.eq(&word_body[j]) {
-                    word_body.remove(j);
-                    for body in split(new_body) {
-                        word_body.insert(j, body);
-                        j += 1;
-                    }
-                    break;
-                }
-                i += 1;
+            word_body.remove(j);
+
+            let (_, body) = &self.words[found];
+
+            let expanded = self.expand_body(split(body), found + 1)?;
+            for operation in expanded {
+                word_body.insert(j, operation);
+                j += 1;
             }
-            j += 1;
         }
 
         Ok(word_body)
@@ -534,7 +542,7 @@ impl Forth {
 
     /// Retorna el word-body del word cuyo word-name coincida con el
     /// pasado por parametro.
-    /// Retorna un Vec<String> que contiene las operaciones del word-body
+    /// Retorna un `Vec<String>` que contiene las operaciones del word-body
     ///
     /// # Errors
     ///
@@ -560,15 +568,11 @@ impl Forth {
     /// # Errors
     ///
     pub fn word_exists(&self, word_name: &str) -> bool {
-        let mut i = 0;
-        while i < self.words.len() {
-            let (name, _) = &self.words[i];
-            if name.eq(word_name) {
-                return true;
-            }
-
-            i += 1;
+        let i = self.get_body_index_from(word_name, 0);
+        if i < self.words.len() {
+            return true;
         }
+
         false
     }
 
