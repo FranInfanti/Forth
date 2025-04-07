@@ -1,10 +1,8 @@
-/// Definición de constantes que se utilizaran a
-/// lo largo del programa.
+/// Constantes que se utilizaran a lo largo del programa.
 pub mod consts {
-    pub const FILE: &str = "stack.fth";
     pub const DEFAULT_SIZE: usize = 128 * 1024;
     pub const ARGV: usize = 2;
-
+    pub const FILE: &str = "stack.fth";
     pub const IF: &str = "if";
     pub const CR: &str = "cr";
     pub const OR: &str = "or";
@@ -27,7 +25,6 @@ pub mod consts {
     pub const EQUAL: &str = "=";
     pub const GREATER: &str = ">";
     pub const LOWER: &str = "<";
-
     pub const START_WORD: char = ':';
     pub const END_WORD: char = ';';
 }

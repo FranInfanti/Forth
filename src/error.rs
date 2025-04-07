@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug)]
-/// Tipo para describir los errores que pueden resultar de la ejecución del programa.
+/// Tipo para describir errores que pueden resultar de la ejecución del programa.
 pub enum Error {
     /// Error al realizar una operación, los elementos del stack son insuficientes.
     StackUnderflow,
@@ -10,14 +10,14 @@ pub enum Error {
     /// Error al definir un word, word-name invalido.
     InvalidWord,
     DivisionByZero,
-    /// Error al utilizar un word, no se encuentra definido en el sistema.
+    /// Error al utilizar un word, no se encuentra definido en el interprete.
     MissingWord,
     FileOpenError,
     FileReadError,
     ParsingError,
     /// Error al ejecutar el programa, los argumentos propocionados son insuficientes.
     InvalidAmountOfArguments,
-    /// Error al eecutar el programa, los argumentos proporcionados son invalidos.
+    /// Error al ejecutar el programa, los argumentos proporcionados son invalidos.
     InvalidArguments,
     /// Error al acceder al stack.
     StackError,

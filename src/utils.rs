@@ -1,3 +1,4 @@
+/// Funciones que se utilizan en varios modulos.
 pub mod split {
     fn split_string(chars: &[char], i: &mut usize) -> String {
         let mut string = String::from(crate::START_STRING);
@@ -15,9 +16,8 @@ pub mod split {
         string.trim().to_string()
     }
 
-    /// Realiza un split del buf recibido por parametro,
-    /// acorde a las necesidades del programa.
-    /// Retorna un vector de String que contiene la separación deseada.
+    /// Aplica un split personalizado a buf.
+    /// Retorna un `Vec<String>` con el split aplicado.
     ///
     /// # Errors
     ///
@@ -30,7 +30,7 @@ pub mod split {
     /// ```
     ///
     pub fn split(buf: &str) -> Vec<String> {
-        let mut split = Vec::<String>::new();
+        let mut result = Vec::<String>::new();
         let chars: Vec<char> = buf.trim().chars().collect();
 
         let mut i = 0;
@@ -38,7 +38,7 @@ pub mod split {
             let mut string = String::new();
             while i < chars.len() && chars[i] != ' ' {
                 if i + 1 < chars.len() && chars[i] == '.' && chars[i + 1] == '"' {
-                    split.push(split_string(&chars, &mut i));
+                    result.push(split_string(&chars, &mut i));
                     break;
                 }
 
@@ -47,13 +47,13 @@ pub mod split {
             }
 
             if !string.is_empty() {
-                split.push(string.trim().to_string());
+                result.push(string.trim().to_string());
             }
 
             while i < chars.len() && chars[i] == ' ' {
                 i += 1;
             }
         }
-        split
+        result
     }
 }
