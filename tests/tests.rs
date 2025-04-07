@@ -218,3 +218,26 @@ fn test_error_stack_overflow() {
 
     assert!(output_correct);
 }
+
+#[test]
+fn test_border_cases() {
+    let _ = Command::new(PROGRAM)
+        .args(["run", "--", "data/border.fth"])
+        .output()
+        .unwrap();
+
+    let expected: Vec<i16> = vec![1, 1, 1, 8, 8, 1, 1, 1, 40];
+    let output = read_file();
+
+    let mut output_correct = true;
+    let mut i = 0;
+    while i < expected.len() {
+        if expected[i] != output[i] {
+            output_correct = false;
+            break;
+        }
+        i += 1;
+    }
+
+    assert!(output_correct);
+}
