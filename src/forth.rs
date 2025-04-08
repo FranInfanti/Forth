@@ -502,7 +502,7 @@ impl Forth {
         Ok(0)
     }
 
-    fn get_body_index_from(&self, word_name: &str, mut i: usize) -> usize {
+    fn get_body_index_from(&self, word_name: &str, mut i: usize) -> Result<usize, Error> {
         while i < self.words.len() {
             let (name, _) = &self.words[i];
             if name.eq(word_name) {
@@ -510,7 +510,12 @@ impl Forth {
             }
             i += 1;
         }
-        i
+
+        if i == self.words.len() {
+            return Err(Error::MissingWord);
+        }
+
+        Ok(i)
     }
 
     fn expand_body(&self, mut word_body: Vec<String>, i: usize) -> Result<Vec<String>, Error> {
@@ -521,14 +526,10 @@ impl Forth {
                 continue;
             }
 
-            let found = self.get_body_index_from(&word_body[j], i);
-            if found == self.words.len() {
-                return Err(Error::MissingWord);
-            }
+            let found = self.get_body_index_from(&word_body[j], i)?;
+            let (_, body) = &self.words[found];
 
             word_body.remove(j);
-
-            let (_, body) = &self.words[found];
 
             let expanded = self.expand_body(split(body), found + 1)?;
             for operation in expanded {
@@ -550,17 +551,11 @@ impl Forth {
     /// que no existeno, o si dentro del word-body se referencia a un word-name que no
     /// existe.
     ///
-    pub fn get_word_body(&mut self, word_name: &String) -> Result<Vec<String>, Error> {
-        let mut i = 0;
-        while i < self.words.len() {
-            let (name, body) = &self.words[i];
-            if name.eq(word_name) {
-                return self.expand_body(split(body), i + 1);
-            }
+    pub fn get_word_body(&self, word_name: &str) -> Result<Vec<String>, Error> {
+        let i = self.get_body_index_from(word_name, 0)?;
+        let (_, body) = &self.words[i];
 
-            i += 1;
-        }
-        Err(Error::MissingWord)
+        self.expand_body(split(body), i + 1)
     }
 
     /// Retorna si existe un word definido con el nombre word_name.
@@ -568,12 +563,7 @@ impl Forth {
     /// # Errors
     ///
     pub fn word_exists(&self, word_name: &str) -> bool {
-        let i = self.get_body_index_from(word_name, 0);
-        if i < self.words.len() {
-            return true;
-        }
-
-        false
+        self.get_body_index_from(word_name, 0).is_ok()
     }
 
     /// Escribe en path el stack de ejecución restante.
