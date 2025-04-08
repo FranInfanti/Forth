@@ -1,7 +1,7 @@
 /// Constantes que se utilizaran a lo largo del programa.
 pub mod consts {
     pub const DEFAULT_SIZE: usize = 128 * 1024;
-    pub const ARGV: usize = 2;
+    pub const ARGS: usize = 2;
     pub const FILE: &str = "stack.fth";
     pub const IF: &str = "if";
     pub const CR: &str = "cr";
@@ -17,7 +17,7 @@ pub mod consts {
     pub const EMIT: &str = "emit";
     pub const SWAP: &str = "swap";
     pub const START_STRING: &str = ".\"";
-    pub const PRINT_STACK: &str = ".";
+    pub const PRINT: &str = ".";
     pub const ADD: &str = "+";
     pub const SUB: &str = "-";
     pub const MUL: &str = "*";

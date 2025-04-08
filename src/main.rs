@@ -24,8 +24,8 @@ use std::{
 /// Returns [`ParsingError`](Error::ParsingError) si el size del stack no es
 /// númerico.
 ///
-fn get_stack_size(env: &str) -> Result<usize, Error> {
-    let chars: Vec<&str> = env.splitn(2, '=').collect();
+fn get_stack_size(arg: &str) -> Result<usize, Error> {
+    let chars: Vec<&str> = arg.splitn(2, '=').collect();
 
     if chars.len() != 2 {
         return Err(Error::InvalidArguments);
@@ -54,19 +54,19 @@ fn get_stack_size(env: &str) -> Result<usize, Error> {
 ///     // path = "data/suma.fth";
 /// ```
 ///
-fn parse_cmd_arguments(env: &mut Vec<String>) -> Result<(usize, &String), Error> {
-    env.remove(0);
+fn parse_cmd_arguments(argv: &mut Vec<String>) -> Result<(usize, &String), Error> {
+    argv.remove(0);
 
-    if env.is_empty() || env.len() > ARGV {
+    if argv.is_empty() || argv.len() > ARGS {
         return Err(Error::InvalidAmountOfArguments);
     }
 
     let mut stack_size = DEFAULT_SIZE;
-    if env.len() == ARGV {
-        stack_size = get_stack_size(&env[1])?;
+    if argv.len() == ARGS {
+        stack_size = get_stack_size(&argv[1])?;
     }
 
-    Ok((stack_size, &env[0]))
+    Ok((stack_size, &argv[0]))
 }
 
 /// Retorna si la definición del word comienza y finaliza en buf.
@@ -123,20 +123,20 @@ fn parse_word(cmds: &[String], i: &mut usize) -> String {
 ///
 fn parse_line(buf: &str) -> Vec<String> {
     let cmds = split(buf.trim());
-    let mut args = Vec::<String>::new();
+    let mut argv = Vec::<String>::new();
 
     let mut i = 0;
     while i < cmds.len() {
         if cmds[i].contains(START_WORD) {
-            args.push(parse_word(&cmds, &mut i));
+            argv.push(parse_word(&cmds, &mut i));
             continue;
         }
 
-        args.push(cmds[i].to_string());
+        argv.push(cmds[i].to_string());
         i += 1;
     }
 
-    args
+    argv
 }
 
 /// Retorna si los siguientes args forman parte de un word.
@@ -182,11 +182,11 @@ fn is_word_defined(forth: &Forth, word_name: &str) -> bool {
 /// Returns [`MissingWord`](Error::MissingWord) si no existe un word cuyo
 /// nombre sea igual al encontrado.
 ///
-fn get_body(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
-    let word_body = forth.get_word_body(&args[i])?;
+fn get_body(forth: &mut Forth, argv: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+    let word_body = forth.get_word_body(&argv[i])?;
 
     for operation in word_body {
-        args.insert(i + 1, operation.to_string());
+        argv.insert(i + 1, operation.to_string());
         i += 1;
     }
     Ok(0)
@@ -219,35 +219,35 @@ fn count_anidados(buf: &str) -> i16 {
 /// Returns [`StackUnderflow`](Error::StackUnderflow) si se intenta tomar
 /// un elemento de un stack vacio.
 ///
-fn if_statement(forth: &mut Forth, args: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
+fn if_statement(forth: &mut Forth, argv: &mut Vec<String>, mut i: usize) -> Result<i16, Error> {
     let result = forth.if_statement()?;
-    args.remove(i);
+    argv.remove(i);
 
     let mut anidados = 0;
-    while anidados > 0 || args[i].ne(ELSE) && args[i].ne(THEN) {
-        anidados += count_anidados(&args[i]);
+    while anidados > 0 || argv[i].ne(ELSE) && argv[i].ne(THEN) {
+        anidados += count_anidados(&argv[i]);
         if result != 0 {
             i += 1;
         } else {
-            args.remove(i);
+            argv.remove(i);
         }
     }
 
     anidados = 0;
-    if args[i].eq(ELSE) {
-        args.remove(i);
+    if argv[i].eq(ELSE) {
+        argv.remove(i);
     }
 
-    while anidados > 0 || args[i].ne(THEN) {
-        anidados += count_anidados(&args[i]);
+    while anidados > 0 || argv[i].ne(THEN) {
+        anidados += count_anidados(&argv[i]);
         if result != 0 {
-            args.remove(i);
+            argv.remove(i);
         } else {
             i += 1;
         }
     }
 
-    args.remove(i);
+    argv.remove(i);
     Ok(0)
 }
 
@@ -339,7 +339,7 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
         SWAP => forth.swap(),
         OVER => forth.over(),
         ROT => forth.rot(),
-        PRINT_STACK => forth.print_stack(),
+        PRINT => forth.print_stack(),
         EMIT => forth.emit(),
         CR => forth.cr(),
         EQUAL => forth.equal(),
@@ -375,22 +375,22 @@ fn do_operation(forth: &mut Forth, buf: &str) -> Result<i16, Error> {
 /// Returns [`MissingWord`](Error::MissingWord) si se intenta acceder a un
 /// word que no se encuentra definido.
 ///
-fn read_line(forth: &mut Forth, mut args: Vec<String>) -> Result<i16, Error> {
+fn read_line(forth: &mut Forth, mut argv: Vec<String>) -> Result<i16, Error> {
     let mut i = 0;
-    while i < args.len() {
-        if is_word(&args[i]) {
-            define_word(forth, &args[i])?;
-        } else if is_word_defined(forth, &args[i]) {
-            get_body(forth, &mut args, i)?;
-        } else if is_if_statment(&args[i]) {
-            if_statement(forth, &mut args, i)?;
+    while i < argv.len() {
+        if is_word(&argv[i]) {
+            define_word(forth, &argv[i])?;
+        } else if is_word_defined(forth, &argv[i]) {
+            get_body(forth, &mut argv, i)?;
+        } else if is_if_statment(&argv[i]) {
+            if_statement(forth, &mut argv, i)?;
             continue;
-        } else if is_string(&args[i]) {
-            print_string(forth, &args[i]);
-        } else if is_numeric(&args[i]) {
-            push_value(forth, &args[i])?;
+        } else if is_string(&argv[i]) {
+            print_string(forth, &argv[i]);
+        } else if is_numeric(&argv[i]) {
+            push_value(forth, &argv[i])?;
         } else {
-            do_operation(forth, &args[i])?;
+            do_operation(forth, &argv[i])?;
         }
 
         i += 1;
@@ -459,8 +459,8 @@ fn run(path: &String, forth: &mut Forth) -> Result<i16, Error> {
 }
 
 pub fn main() {
-    let mut env: Vec<String> = args().collect();
-    let (stack_size, path) = match parse_cmd_arguments(&mut env) {
+    let mut argv: Vec<String> = args().collect();
+    let (stack_size, path) = match parse_cmd_arguments(&mut argv) {
         Ok((stack_size, path)) => (stack_size, path),
         Err(error) => return println!("{}", error),
     };
