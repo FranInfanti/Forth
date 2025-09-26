@@ -617,9 +617,8 @@ mod test {
         let mut forth = Forth::new(128);
         let value = 10;
 
-        match forth.push(value) {
-            Ok(result) => assert_eq!(result, value),
-            Err(_error) => {}
+        if let Ok(result) = forth.push(value) {
+            assert_eq!(result, value)
         }
     }
 
@@ -628,11 +627,10 @@ mod test {
         let mut forth = Forth::new(128);
         let value = 10;
 
-        let _ = forth.push(value);
+        forth.push(value).unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, value),
-            Err(_error) => {}
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, value)
         }
     }
 
@@ -642,14 +640,13 @@ mod test {
         let a = 10;
         let b = 5;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        let _ = forth.add();
+        forth.add().unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, a + b),
-            Err(_error) => {}
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, a + b)
         }
     }
 
@@ -660,14 +657,13 @@ mod test {
         let b = 10;
 
         // 5 10 - => 5 - 10
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        let _ = forth.sub();
+        forth.sub().unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, a - b),
-            Err(_error) => {}
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, a - b);
         }
     }
 
@@ -677,14 +673,13 @@ mod test {
         let a = 10;
         let b = 5;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        let _ = forth.mul();
+        forth.mul().unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, a * b),
-            Err(_error) => {}
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, a * b)
         }
     }
 
@@ -694,14 +689,13 @@ mod test {
         let a = 10;
         let b = 5;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        let _ = forth.div();
+        forth.div().unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, a / b),
-            Err(_error) => {}
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, a / b)
         }
     }
 
@@ -711,13 +705,12 @@ mod test {
         let a = 1;
         let b = 1;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
         // a == b ?
-        match forth.equal() {
-            Ok(result) => assert_eq!(result, -1),
-            Err(_) => (),
+        if let Ok(result) = forth.equal() {
+            assert_eq!(result, -1)
         }
     }
 
@@ -727,13 +720,12 @@ mod test {
         let a = 3;
         let b = 4;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
         // 3 4 > => 3 > 4
-        match forth.greater() {
-            Ok(result) => assert_eq!(result, 0),
-            Err(_) => (),
+        if let Ok(result) = forth.greater() {
+            assert_eq!(result, 0)
         }
     }
 
@@ -743,13 +735,12 @@ mod test {
         let a = 3;
         let b = 4;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
         // 3 4 < => 3 < 4
-        match forth.lower() {
-            Ok(result) => assert_eq!(result, -1),
-            Err(_) => (),
+        if let Ok(result) = forth.lower() {
+            assert_eq!(result, -1)
         }
     }
 
@@ -759,12 +750,11 @@ mod test {
         let a = 2;
         let b = 0;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        match forth.and() {
-            Ok(result) => assert_eq!(result, 0),
-            Err(_) => (),
+        if let Ok(result) = forth.and() {
+            assert_eq!(result, 0)
         }
     }
 
@@ -774,12 +764,11 @@ mod test {
         let a = 5;
         let b = 0;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
 
-        match forth.or() {
-            Ok(result) => assert_eq!(result, -1),
-            Err(_) => (),
+        if let Ok(result) = forth.or() {
+            assert_eq!(result, -1);
         }
     }
 
@@ -788,11 +777,10 @@ mod test {
         let mut forth = Forth::new(128);
         let a = 5;
 
-        let _ = forth.push(a);
+        forth.push(a).unwrap();
 
-        match forth.not() {
-            Ok(result) => assert_eq!(result, 0),
-            Err(_) => (),
+        if let Ok(result) = forth.not() {
+            assert_eq!(result, 0)
         }
     }
 
@@ -801,12 +789,11 @@ mod test {
         let mut forth = Forth::new(128);
         let a = 10;
 
-        let _ = forth.push(a);
-        let _ = forth.dup();
+        forth.push(a).unwrap();
+        forth.dup().unwrap();
 
-        match forth.pop() {
-            Ok(result) => assert_eq!(result, a),
-            Err(_) => (),
+        if let Ok(result) = forth.pop() {
+            assert_eq!(result, a)
         }
     }
 
@@ -816,18 +803,16 @@ mod test {
         let a = 5;
         let b = 1;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
-        let _ = forth.rot();
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
+        forth.swap().unwrap();
 
-        match forth.pop() {
-            Ok(first) => assert_eq!(first, b),
-            Err(_) => {}
-        };
+        if let Ok(first) = forth.pop() {
+            assert_eq!(first, a)
+        }
 
-        match forth.pop() {
-            Ok(second) => assert_eq!(second, a),
-            Err(_) => {}
+        if let Ok(second) = forth.pop() {
+            assert_eq!(second, b)
         }
     }
 
@@ -837,14 +822,13 @@ mod test {
         let a = 5;
         let b = 2;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
-        let _ = forth.over();
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
+        forth.over().unwrap();
 
-        match forth.pop() {
-            Ok(expected) => assert_eq!(expected, a),
-            Err(_) => {}
-        };
+        if let Ok(expected) = forth.pop() {
+            assert_eq!(expected, a)
+        }
     }
 
     #[test]
@@ -854,24 +838,21 @@ mod test {
         let b = 2;
         let c = 3;
 
-        let _ = forth.push(a);
-        let _ = forth.push(b);
-        let _ = forth.push(c);
-        let _ = forth.rot();
+        forth.push(a).unwrap();
+        forth.push(b).unwrap();
+        forth.push(c).unwrap();
+        forth.rot().unwrap();
 
-        match forth.pop() {
-            Ok(expected) => assert_eq!(expected, a),
-            Err(_) => {}
-        };
-
-        match forth.pop() {
-            Ok(expected) => assert_eq!(expected, c),
-            Err(_) => {}
+        if let Ok(expected) = forth.pop() {
+            assert_eq!(expected, a)
         }
 
-        match forth.pop() {
-            Ok(expected) => assert_eq!(expected, b),
-            Err(_) => {}
+        if let Ok(expected) = forth.pop() {
+            assert_eq!(expected, c)
+        }
+
+        if let Ok(expected) = forth.pop() {
+            assert_eq!(expected, b)
         }
     }
 }
